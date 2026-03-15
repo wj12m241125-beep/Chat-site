@@ -53,25 +53,45 @@ margin-top:20px;
 var rooms = JSON.parse(localStorage.getItem("rooms")) || [];
 var list = document.getElementById("roomList");
 
-rooms.forEach(function(room){
+rooms.forEach(function(room, index){
 
 var div = document.createElement("div");
 div.className = "room";
-div.innerText = room;
 
-div.onclick = function(){
+var title = document.createElement("p");
+title.innerText = room.name;
 
-localStorage.setItem("currentRoom", room);
+title.onclick = function(){
 
+localStorage.setItem("currentRoom", room.name);
 window.location.href = "chat.html";
 
 };
+
+div.appendChild(title);
+
+if(room.admin === "me"){
+
+var del = document.createElement("button");
+del.innerText = "방 삭제";
+
+del.onclick = function(){
+
+rooms.splice(index,1);
+localStorage.setItem("rooms", JSON.stringify(rooms));
+location.reload();
+
+};
+
+div.appendChild(del);
+
+}
 
 list.appendChild(div);
 
 });
 
 </script>
-
+  
 </body>
 </html>
