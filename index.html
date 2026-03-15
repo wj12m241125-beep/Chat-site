@@ -1,11 +1,63 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>내 채팅 사이트</title>
+<title>Beep Chat</title>
+
+<style>
+body{
+font-family: Arial;
+background:#f2f2f2;
+text-align:center;
+}
+
+header{
+background:#222;
+color:white;
+padding:15px;
+}
+
+nav a{
+margin:10px;
+color:white;
+text-decoration:none;
+font-weight:bold;
+}
+
+.container{
+margin-top:40px;
+}
+
+button{
+padding:10px 20px;
+margin:10px;
+font-size:16px;
+}
+</style>
+
 </head>
 
 <body>
-<h1>내 채팅 사이트</h1>
-<p>여기는 내가 만든 사이트입니다.</p>
+
+<header>
+<h1>Beep Chat</h1>
+
+<nav>
+<a href="index.html">홈</a>
+<a href="rooms.html">채팅방</a>
+<a href="login.html">로그인</a>
+<a href="signup.html">회원가입</a>
+</nav>
+
+</header>
+
+<div class="container">
+
+<h2>환영합니다!</h2>
+<p>자유롭게 채팅방에 참여해보세요.</p>
+
+<button onclick="location.href='rooms.html'">채팅 시작</button>
+
+</div>
+
 </body>
 </html>
