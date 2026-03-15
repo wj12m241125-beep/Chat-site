@@ -26,7 +26,12 @@ return;
 
 var rooms = JSON.parse(localStorage.getItem("rooms")) || [];
 
-rooms.push(name);
+var room = {
+name: name,
+admin: "me"
+};
+
+rooms.push(room);
 
 localStorage.setItem("rooms", JSON.stringify(rooms));
 
