@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>닉네임 설정</title>
+</head>
+
+<body style="text-align:center;margin-top:100px;font-family:Arial;">
+
+<h1>닉네임 설정</h1>
+
+<input id="name" placeholder="닉네임 입력">
+<br><br>
+
+<button onclick="saveName()">시작하기</button>
+
+<script>
+
+function saveName(){
+
+var name = document.getElementById("name").value;
+
+if(name===""){
+alert("닉네임을 입력하세요");
+return;
+}
+
+localStorage.setItem("nickname",name);
+
+window.location.href="index.html";
+
+}
+
+</script>
+
+</body>
+</html>
