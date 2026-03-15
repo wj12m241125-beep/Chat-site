@@ -1,20 +1,55 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>채팅방 목록</title>
+<title>비프챗 - 채팅방</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f4f4;
+text-align:center;
+margin:0;
+}
+
+header{
+background:#222;
+color:white;
+padding:20px;
+}
+
+.room{
+background:white;
+width:300px;
+margin:20px auto;
+padding:20px;
+border-radius:10px;
+cursor:pointer;
+}
+
+button{
+padding:10px 20px;
+font-size:16px;
+margin-top:20px;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<h1>채팅방 목록</h1>
+<header>
+<h1>비프챗 채팅방</h1>
+</header>
 
-<ul>
-<li>게임방</li>
-<li>잡담방</li>
-<li>공부방</li>
-</ul>
+<div class="room">게임 채팅방</div>
+<div class="room">잡담 채팅방</div>
+<div class="room">공부 채팅방</div>
 
-<button>방 만들기</button>
+<button onclick="location.href='create.html'">
+방 만들기
+</button>
 
 </body>
 </html>
