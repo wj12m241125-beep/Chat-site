@@ -51,7 +51,6 @@ margin-top:20px;
 <script>
 
 var rooms = JSON.parse(localStorage.getItem("rooms")) || [];
-
 var list = document.getElementById("roomList");
 
 rooms.forEach(function(room){
@@ -59,6 +58,14 @@ rooms.forEach(function(room){
 var div = document.createElement("div");
 div.className = "room";
 div.innerText = room;
+
+div.onclick = function(){
+
+localStorage.setItem("currentRoom", room);
+
+window.location.href = "chat.html";
+
+};
 
 list.appendChild(div);
 
