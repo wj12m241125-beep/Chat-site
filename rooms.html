@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>비프챗 - 채팅방</title>
+<title>비프챗 채팅방</title>
 
 <style>
 
@@ -21,10 +21,9 @@ padding:20px;
 .room{
 background:white;
 width:300px;
-margin:20px auto;
+margin:15px auto;
 padding:20px;
 border-radius:10px;
-cursor:pointer;
 }
 
 button{
@@ -43,13 +42,29 @@ margin-top:20px;
 <h1>비프챗 채팅방</h1>
 </header>
 
-<div class="room">게임 채팅방</div>
-<div class="room">잡담 채팅방</div>
-<div class="room">공부 채팅방</div>
+<div id="roomList"></div>
 
 <button onclick="location.href='create.html'">
 방 만들기
 </button>
+
+<script>
+
+var rooms = JSON.parse(localStorage.getItem("rooms")) || [];
+
+var list = document.getElementById("roomList");
+
+rooms.forEach(function(room){
+
+var div = document.createElement("div");
+div.className = "room";
+div.innerText = room;
+
+list.appendChild(div);
+
+});
+
+</script>
 
 </body>
 </html>
