@@ -48,8 +48,20 @@ padding:10px;
 var room = localStorage.getItem("currentRoom");
 
 document.getElementById("roomTitle").innerText = room;
+  
+function send( function send(){
 
-function send(){
+var msg = document.getElementById("msg").value;
+
+var name = localStorage.getItem("nickname");
+
+var chat = document.getElementById("chat");
+
+chat.innerHTML += "<p><b>"+name+"</b> : "+msg+"</p>";
+
+document.getElementById("msg").value="";
+
+}){
 
 var msg = document.getElementById("msg").value;
 
