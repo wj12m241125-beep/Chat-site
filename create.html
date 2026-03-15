@@ -8,10 +8,33 @@
 
 <h1>새 채팅방 만들기</h1>
 
-<input placeholder="방 이름 입력">
+<input id="roomName" placeholder="방 이름 입력">
 <br><br>
 
-<button>방 생성</button>
+<button onclick="createRoom()">방 생성</button>
+
+<script>
+
+function createRoom(){
+
+var name = document.getElementById("roomName").value;
+
+if(name === ""){
+alert("방 이름을 입력하세요");
+return;
+}
+
+var rooms = JSON.parse(localStorage.getItem("rooms")) || [];
+
+rooms.push(name);
+
+localStorage.setItem("rooms", JSON.stringify(rooms));
+
+window.location.href = "rooms.html";
+
+}
+
+</script>
 
 </body>
 </html>
