@@ -118,13 +118,24 @@ margin-left:10px;
 <script>
 
 let nickname = localStorage.getItem("nickname") || "익명"
-let roomOwner = localStorage.getItem("roomOwner") || nickname
+let roomName = localStorage.getItem("currentRoom") || "default"
 
+let rooms = JSON.parse(localStorage.getItem("rooms") || "{}")
+
+if(!rooms[roomName]){
+rooms[roomName] = { users:0 }
+}
+
+rooms[roomName].users++
+
+localStorage.setItem("rooms", JSON.stringify(rooms))
+
+let roomOwner = localStorage.getItem("roomOwner") || nickname
 let users = [nickname]
 
 function renderUsers(){
 
-let list=document.getElementById("userList")
+let list = document.getElementById("userList")
 list.innerHTML=""
 
 users.forEach(u=>{
@@ -230,6 +241,24 @@ addMessage("<b>"+nickname+"</b><br><img src='"+e.target.result+"' width='200'>")
 reader.readAsDataURL(file)
 
 }
+
+window.addEventListener("beforeunload", function(){
+
+let rooms = JSON.parse(localStorage.getItem("rooms") || "{}")
+
+if(rooms[roomName]){
+
+rooms[roomName].users--
+
+if(rooms[roomName].users <= 0){
+delete rooms[roomName]
+}
+
+localStorage.setItem("rooms", JSON.stringify(rooms))
+
+}
+
+})
 
 renderUsers()
 
