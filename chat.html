@@ -46,32 +46,20 @@ padding:10px;
 <script>
 
 var room = localStorage.getItem("currentRoom");
-
-document.getElementById("roomTitle").innerText = room;
-  
-function send( function send(){
-
-var msg = document.getElementById("msg").value;
-
 var name = localStorage.getItem("nickname");
 
-var chat = document.getElementById("chat");
+document.getElementById("roomTitle").innerText = room;
 
-chat.innerHTML += "<p><b>"+name+"</b> : "+msg+"</p>";
+var users = JSON.parse(localStorage.getItem("users")) || [];
 
-document.getElementById("msg").value="";
+var now = Date.now();
 
-}){
+users.push({
+name:name,
+time:now
+});
 
-var msg = document.getElementById("msg").value;
-
-var chat = document.getElementById("chat");
-
-chat.innerHTML += "<p>"+msg+"</p>";
-
-document.getElementById("msg").value="";
-
-}
+localStorage.setItem("users", JSON.stringify(users));
 
 </script>
 
