@@ -31,15 +31,51 @@ font-size:16px;
 
 <h1>비프챗 로그인</h1>
 
-<input placeholder="아이디"><br>
-<input type="password" placeholder="비밀번호"><br>
-
-<button>로그인</button>
+<input id="id" placeholder="아이디"><br>
+<input id="pw" type="password" placeholder="비밀번호"><br>
+<button onclick="login()">로그인</button>
 
 <p>
 계정이 없나요?  
 <a href="signup.html">회원가입</a>
 </p>
 
+  <script>
+
+function login(){
+
+var id = document.getElementById("id").value;
+var pw = document.getElementById("pw").value;
+
+var users = JSON.parse(localStorage.getItem("users")) || [];
+
+var ok = false;
+
+users.forEach(function(user){
+
+if(user.id === id && user.pw === pw){
+ok = true;
+}
+
+});
+
+if(ok){
+
+localStorage.setItem("loginUser",id);
+
+alert("로그인 성공");
+
+window.location.href="index.html";
+
+}else{
+
+alert("아이디 또는 비밀번호 틀림");
+
+}
+
+}
+
+</script>
+  
 </body>
 </html>
