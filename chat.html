@@ -63,5 +63,15 @@ localStorage.setItem("users", JSON.stringify(users));
 
 </script>
 
+<script>
+
+var user = localStorage.getItem("loginUser");
+
+if(!user){
+window.location.href = "login.html";
+}
+
+</script>
+
 </body>
 </html>
