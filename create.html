@@ -9,6 +9,9 @@
 <h1>새 채팅방 만들기</h1>
 
 <input id="roomName" placeholder="방 이름 입력">
+<input id="roomTitle" placeholder="방 제목"><br>
+<input id="roomDesc" placeholder="방 설명"><br>
+<button onclick="createRoom()">방 만들기</button>
 <br><br>
 
 <button onclick="createRoom()">방 생성</button>
@@ -39,17 +42,28 @@ window.location.href = "rooms.html";
 
 }
 
-</script>
+function createRoom(){
 
-<script>
+var title = document.getElementById("roomTitle").value;
+var desc = document.getElementById("roomDesc").value;
 
 var user = localStorage.getItem("loginUser");
 
-if(!user){
-window.location.href = "login.html";
-}
+var rooms = JSON.parse(localStorage.getItem("rooms")) || [];
 
-</script>
+rooms.push({
+title:title,
+desc:desc,
+owner:user
+});
+
+localStorage.setItem("rooms",JSON.stringify(rooms));
+
+alert("방 생성 완료");
+
+window.location.href="rooms.html";
+
+}
 
 </body>
 </html>
