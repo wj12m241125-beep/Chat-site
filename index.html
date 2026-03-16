@@ -1,85 +1,70 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Beep Chat</title>
+<meta charset="UTF-8">
+<title>메인</title>
 
 <style>
+
 body{
-font-family: Arial;
-background:#f2f2f2;
-text-align:center;
+font-family:sans-serif;
 }
 
-header{<button onclick="logout()">로그아웃</button>
-background:#222;
-color:white;
-padding:15px;
-}
-
-nav a{
-margin:10px;
-color:white;
-text-decoration:none;
-font-weight:bold;
-}
-
-.container{
-margin-top:40px;
+.top{
+position:absolute;
+top:10px;
+left:10px;
 }
 
 button{
-padding:10px 20px;
-margin:10px;
-font-size:16px;
+margin-right:10px;
 }
+
 </style>
 
 </head>
 
 <body>
 
-<header>
-<h1>Beep Chat</h1>
+<div class="top">
 
-<nav>
-<a href="index.html">홈</a>
-<a href="rooms.html">채팅방</a>
-<a href="login.html">로그인</a>
-<a href="signup.html">회원가입</a>
-</nav>
+<button onclick="profile()">개인정보 설정</button>
 
-</header>
-
-<div class="container">
-
-<h2>환영합니다!</h2>
-<p>자유롭게 채팅방에 참여해보세요.</p>
-
-<button onclick="location.href='rooms.html'">채팅 시작</button>
+<button onclick="logout()">로그아웃</button>
 
 </div>
 
-</body>
-</html>
+<h1>채팅 사이트</h1>
+
+<p id="welcome"></p>
+
+<p><a href="rooms.html">채팅방 목록</a></p>
 
 <script>
 
-var user = localStorage.getItem("loginUser");
+var user=localStorage.getItem("loginUser");
 
 if(!user){
 window.location.href="login.html";
 }
 
-</script>
-
-<script>
+document.getElementById("welcome").innerText=user+"님 환영합니다";
 
 function logout(){
 
 localStorage.removeItem("loginUser");
 
-window.location.href = "login.html";
+window.location.href="login.html";
+
+}
+
+function profile(){
+
+alert("개인정보 설정은 다음 단계에서 만들겠습니다");
 
 }
 
 </script>
+
+</body>
+</html>
