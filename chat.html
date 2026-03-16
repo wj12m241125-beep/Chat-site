@@ -209,6 +209,32 @@ location.reload();
 
 }
 
+/* 방 나가면 실행 */
+
+window.onbeforeunload=function(){
+
+var users=JSON.parse(localStorage.getItem("roomUsers"))||[];
+
+users=users.filter(function(u){
+return u!==user;
+});
+
+localStorage.setItem("roomUsers",JSON.stringify(users));
+
+/* 아무도 없으면 방 삭제 */
+
+if(users.length===0){
+
+var rooms=JSON.parse(localStorage.getItem("rooms"))||[];
+
+rooms.splice(roomIndex,1);
+
+localStorage.setItem("rooms",JSON.stringify(rooms));
+
+}
+
+};
+
 </script>
 
 </body>
