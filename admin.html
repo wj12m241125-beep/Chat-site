@@ -1,0 +1,147 @@
+<!-- 관리자 버튼 -->
+<div id="adminBtn">⚙</div>
+
+<!-- 관리자 로그인 -->
+<div id="adminLogin" class="adminBox">
+<h3>관리자 로그인</h3>
+<input type="password" id="adminPass" placeholder="비밀번호">
+<button onclick="checkAdmin()">접속</button>
+</div>
+
+<!-- 관리자 패널 -->
+<div id="adminPanel" class="adminBox">
+<h2>관리자 패널</h2>
+
+<h3>유저 관리</h3>
+<ul id="adminUsers"></ul>
+
+<h3>방 관리</h3>
+<ul id="adminRooms"></ul>
+
+<button onclick="closeAdmin()">닫기</button>
+</div>
+
+<style>
+
+#adminBtn{
+position:fixed;
+bottom:10px;
+left:10px;
+background:#222;
+color:white;
+width:30px;
+height:30px;
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+border-radius:6px;
+font-size:14px;
+}
+
+.adminBox{
+display:none;
+position:fixed;
+bottom:50px;
+left:10px;
+background:white;
+border:1px solid #ccc;
+padding:15px;
+width:250px;
+box-shadow:0 0 10px rgba(0,0,0,0.2);
+}
+
+.adminBox input{
+width:100%;
+padding:6px;
+margin-bottom:8px;
+}
+
+.adminBox button{
+padding:6px 10px;
+cursor:pointer;
+}
+
+</style>
+
+<script>
+
+const ADMIN_PASSWORD = "beepadmin";
+
+document.getElementById("adminBtn").onclick = function(){
+document.getElementById("adminLogin").style.display="block";
+}
+
+function checkAdmin(){
+const pass = document.getElementById("adminPass").value;
+
+if(pass === ADMIN_PASSWORD){
+
+document.getElementById("adminLogin").style.display="none";
+document.getElementById("adminPanel").style.display="block";
+
+loadAdminData();
+
+}else{
+alert("비밀번호 틀림");
+}
+}
+
+function closeAdmin(){
+document.getElementById("adminPanel").style.display="none";
+}
+
+function loadAdminData(){
+
+const users = JSON.parse(localStorage.getItem("users")) || [];
+const rooms = JSON.parse(localStorage.getItem("rooms")) || [];
+
+const userList = document.getElementById("adminUsers");
+const roomList = document.getElementById("adminRooms");
+
+userList.innerHTML="";
+roomList.innerHTML="";
+
+users.forEach((u,i)=>{
+
+const li=document.createElement("li");
+li.innerHTML = u.nickname+" ("+u.age+") <button onclick='banUser("+i+")'>차단</button>";
+userList.appendChild(li);
+
+});
+
+rooms.forEach((r,i)=>{
+
+const li=document.createElement("li");
+li.innerHTML = r.title+" <button onclick='deleteRoom("+i+")'>삭제</button>";
+roomList.appendChild(li);
+
+});
+
+}
+
+function banUser(i){
+
+let users = JSON.parse(localStorage.getItem("users")) || [];
+
+users.splice(i,1);
+
+localStorage.setItem("users",JSON.stringify(users));
+
+loadAdminData();
+
+}
+
+function deleteRoom(i){
+
+let rooms = JSON.parse(localStorage.getItem("rooms")) || [];
+
+rooms.splice(i,1);
+
+localStorage.setItem("rooms",JSON.stringify(rooms));
+
+loadAdminData();
+
+}
+
+</script>
