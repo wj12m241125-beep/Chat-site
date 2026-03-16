@@ -2,108 +2,113 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Beep Chat</title>
+<title>beep chat</title>
 
 <style>
-
 body{
 margin:0;
-font-family:Arial;
+font-family:Arial, sans-serif;
+background:#f2f2f2;
+}
+
+#container{
+display:flex;
 height:100vh;
-display:flex;
-flex-direction:column;
-background:#f5f5f5;
 }
 
-.top{
-background:#111;
-color:white;
-padding:15px;
-font-size:20px;
-}
-
-.container{
-flex:1;
-display:flex;
-}
-
-.users{
-width:200px;
+#users{
+width:220px;
 background:white;
 border-right:1px solid #ddd;
-padding:10px;
-}
-
-.user{
-padding:6px;
-border-bottom:1px solid #eee;
-}
-
-.chatArea{
-flex:1;
-display:flex;
-flex-direction:column;
-}
-
-.messages{
-flex:1;
 padding:15px;
 overflow-y:auto;
 }
 
-.msg{
-margin-bottom:10px;
+#users h3{
+margin-top:0;
 }
 
-.inputArea{
+#userList{
+list-style:none;
+padding:0;
+}
+
+#userList li{
+padding:6px 0;
+border-bottom:1px solid #eee;
+}
+
+#chatArea{
+flex:1;
 display:flex;
-padding:10px;
+flex-direction:column;
+}
+
+#messages{
+flex:1;
+padding:20px;
+overflow-y:auto;
+}
+
+.message{
+margin-bottom:10px;
+font-size:16px;
+}
+
+#inputArea{
+display:flex;
+padding:12px;
 background:white;
 border-top:1px solid #ddd;
 }
 
-.inputBox{
+#msg{
 flex:1;
-padding:10px;
+padding:12px;
 font-size:16px;
 border:1px solid #ccc;
+border-radius:6px;
 }
 
-.sendBtn{
-width:90px;
-background:#111;
+#send{
+margin-left:10px;
+padding:12px 20px;
+font-size:16px;
+background:#4CAF50;
 color:white;
 border:none;
+border-radius:6px;
 cursor:pointer;
 }
 
+#send:hover{
+background:#45a049;
+}
+
+#imageUpload{
+margin-left:10px;
+}
 </style>
 
 </head>
 
 <body>
 
-<div class="top" id="roomTitle"></div>
+<div id="container">
 
-<div class="container">
-
-<div class="users">
-
+<div id="users">
 <h3>접속자</h3>
-<div id="userList"></div>
-
+<ul id="userList"></ul>
 </div>
 
-<div class="chatArea">
+<div id="chatArea">
 
-<div class="messages" id="messages"></div>
+<div id="messages"></div>
 
-<div class="inputArea">
-
-<input id="msg" class="inputBox" placeholder="메시지 입력">
-
-<button class="sendBtn" onclick="send()">보내기</button>
-
+<div id="inputArea">
+<input id="msg" placeholder="메시지 입력">
+<button id="send">보내기</button>
+<input type="file" id="imageUpload">
 </div>
 
 </div>
@@ -112,135 +117,121 @@ cursor:pointer;
 
 <script>
 
-var user=localStorage.getItem("loginUser");
+let nickname = localStorage.getItem("nickname") || "익명"
+let roomOwner = localStorage.getItem("roomOwner") || nickname
 
-if(!user){
-window.location.href="login.html";
-}
+let users = [nickname]
 
-var roomIndex=localStorage.getItem("currentRoom");
+function renderUsers(){
 
-function loadRoom(){
+let list=document.getElementById("userList")
+list.innerHTML=""
 
-var rooms=JSON.parse(localStorage.getItem("rooms"))||[];
+users.forEach(u=>{
 
-var room=rooms[roomIndex];
+let li=document.createElement("li")
 
-if(!room){
-window.location.href="index.html";
-return;
-}
-
-if(!room.users){
-room.users=[];
-}
-
-if(!room.messages){
-room.messages=[];
-}
-
-document.getElementById("roomTitle").innerText=room.title;
-
-/* 접속자 추가 */
-
-if(!room.users.includes(user)){
-room.users.push(user);
-rooms[roomIndex]=room;
-localStorage.setItem("rooms",JSON.stringify(rooms));
-}
-
-/* 접속자 목록 */
-
-var userList=document.getElementById("userList");
-
-userList.innerHTML="";
-
-room.users.forEach(function(u){
-
-var crown="";
-
-if(u===room.owner){
-crown=" 👑";
-}
-
-userList.innerHTML+=`
-<div class="user">${u}${crown}</div>
-`;
-
-});
-
-/* 메시지 출력 */
-
-var msgBox=document.getElementById("messages");
-
-msgBox.innerHTML="";
-
-room.messages.forEach(function(m){
-
-msgBox.innerHTML+=`
-<div class="msg"><b>${m.user}</b> : ${m.text}</div>
-`;
-
-});
-
-}
-
-/* 메시지 보내기 */
-
-function send(){
-
-var text=document.getElementById("msg").value;
-
-if(text==""){
-return;
-}
-
-var rooms=JSON.parse(localStorage.getItem("rooms"))||[];
-
-var room=rooms[roomIndex];
-
-room.messages.push({
-user:user,
-text:text
-});
-
-rooms[roomIndex]=room;
-
-localStorage.setItem("rooms",JSON.stringify(rooms));
-
-document.getElementById("msg").value="";
-
-loadRoom();
-
-}
-
-/* 자동 업데이트 */
-
-setInterval(loadRoom,1000);
-
-loadRoom();
-
-/* 방 나가기 */
-
-window.onbeforeunload=function(){
-
-var rooms=JSON.parse(localStorage.getItem("rooms"))||[];
-
-var room=rooms[roomIndex];
-
-room.users=room.users.filter(function(u){
-return u!==user;
-});
-
-if(room.users.length===0){
-rooms.splice(roomIndex,1);
+if(u===roomOwner){
+li.innerHTML="👑 "+u
 }else{
-rooms[roomIndex]=room;
+li.innerText=u
 }
 
-localStorage.setItem("rooms",JSON.stringify(rooms));
+list.appendChild(li)
 
-};
+})
+
+}
+
+function addMessage(text){
+
+let div=document.createElement("div")
+div.className="message"
+div.innerHTML=text
+
+let messages=document.getElementById("messages")
+
+messages.appendChild(div)
+
+messages.scrollTop=messages.scrollHeight
+
+}
+
+function handleCommand(msg){
+
+if(!msg.startsWith("/")) return false
+
+let args=msg.split(" ")
+let cmd=args[0]
+
+if(cmd==="/주사위"){
+
+let r=Math.floor(Math.random()*6)+1
+addMessage("<b>🎲 주사위 결과 : "+r+"</b>")
+return true
+
+}
+
+if(cmd==="/강퇴"){
+
+if(nickname!==roomOwner){
+addMessage("방장만 사용 가능합니다")
+return true
+}
+
+let target=args[1]
+
+users=users.filter(u=>u!==target)
+
+addMessage("<b>"+target+" 강퇴됨</b>")
+
+renderUsers()
+
+return true
+
+}
+
+return false
+
+}
+
+document.getElementById("send").onclick=function(){
+
+let input=document.getElementById("msg")
+let msg=input.value
+
+if(msg==="") return
+
+if(handleCommand(msg)){
+input.value=""
+return
+}
+
+addMessage("<b>"+nickname+"</b> : "+msg)
+
+input.value=""
+
+}
+
+document.getElementById("imageUpload").onchange=function(){
+
+let file=this.files[0]
+
+if(!file) return
+
+let reader=new FileReader()
+
+reader.onload=function(e){
+
+addMessage("<b>"+nickname+"</b><br><img src='"+e.target.result+"' width='200'>")
+
+}
+
+reader.readAsDataURL(file)
+
+}
+
+renderUsers()
 
 </script>
 
