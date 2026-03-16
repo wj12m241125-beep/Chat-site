@@ -5,7 +5,6 @@
 <title>beep chat</title>
 
 <style>
-
 body{
 font-family:Arial;
 background:#f2f2f2;
@@ -16,12 +15,26 @@ padding:20px;
 #top{
 display:flex;
 justify-content:space-between;
+align-items:center;
 margin-bottom:20px;
 }
 
-button{
-padding:10px 15px;
-font-size:16px;
+#categories{
+margin-bottom:15px;
+}
+
+.cat{
+margin-right:8px;
+padding:6px 12px;
+border:none;
+background:#ddd;
+cursor:pointer;
+border-radius:5px;
+}
+
+.cat.active{
+background:#4CAF50;
+color:white;
 }
 
 .room{
@@ -35,9 +48,7 @@ cursor:pointer;
 .room:hover{
 background:#eee;
 }
-
 </style>
-
 </head>
 
 <body>
@@ -47,9 +58,23 @@ background:#eee;
 <button onclick="createRoom()">방 만들기</button>
 </div>
 
+<div id="categories">
+<button class="cat active" onclick="setCategory('전체')">전체</button>
+<button class="cat" onclick="setCategory('10대')">10대</button>
+<button class="cat" onclick="setCategory('20대')">20대</button>
+<button class="cat" onclick="setCategory('30대')">30대</button>
+<button class="cat" onclick="setCategory('40대')">40대</button>
+<button class="cat" onclick="setCategory('50대')">50대</button>
+</div>
+
 <div id="rooms"></div>
 
 <script>
+
+let currentCategory="전체"
+
+let nickname = localStorage.getItem("nickname")
+let age = localStorage.getItem("age")
 
 let rooms = JSON.parse(localStorage.getItem("rooms") || "[]")
 
@@ -57,12 +82,44 @@ function save(){
 localStorage.setItem("rooms", JSON.stringify(rooms))
 }
 
+function getAgeCategory(){
+
+if(!age) return "기타"
+
+let n = parseInt(age)
+
+if(n<20) return "10대"
+if(n<30) return "20대"
+if(n<40) return "30대"
+if(n<50) return "40대"
+return "50대"
+
+}
+
+function setCategory(c){
+
+currentCategory=c
+
+document.querySelectorAll(".cat").forEach(b=>{
+b.classList.remove("active")
+})
+
+event.target.classList.add("active")
+
+render()
+
+}
+
 function render(){
 
-let box = document.getElementById("rooms")
+let box=document.getElementById("rooms")
 box.innerHTML=""
 
+rooms = rooms.filter(r=>r.users>0)
+
 rooms.forEach((r,i)=>{
+
+if(currentCategory!=="전체" && r.category!==currentCategory) return
 
 let div=document.createElement("div")
 div.className="room"
@@ -74,9 +131,15 @@ r.users+" / "+r.max+" 명<br>"+
 
 div.onclick=function(){
 
+if(r.users>=r.max){
+alert("방이 가득 찼습니다")
+return
+}
+
 localStorage.setItem("currentRoom", r.title)
 
 rooms[i].users++
+
 save()
 
 location.href="chat.html"
@@ -87,30 +150,57 @@ box.appendChild(div)
 
 })
 
+save()
+
 }
 
 function createRoom(){
 
-let title = prompt("방 제목")
+if(!nickname){
+alert("로그인 후 이용해주세요")
+location.href="login.html"
+return
+}
+
+let title=prompt("방 제목")
+
 if(!title) return
 
-let max = prompt("최대 인원")
-if(!max) return
+if(rooms.some(r=>r.title===title)){
+alert("이미 존재하는 방 제목입니다")
+return
+}
 
-let nickname = localStorage.getItem("nickname") || "익명"
-let age = localStorage.getItem("age") || "?"
+let max=prompt("최대 인원")
+
+if(!max || isNaN(max)){
+alert("숫자를 입력해주세요")
+return
+}
+
+max=parseInt(max)
+
+if(max<2){
+alert("최소 2명 이상")
+return
+}
+
+let category=getAgeCategory()
 
 rooms.push({
 title:title,
 users:1,
 max:max,
 owner:nickname,
-age:age
+age:age,
+category:category
 })
+
+localStorage.setItem("currentRoom", title)
 
 save()
 
-render()
+location.href="chat.html"
 
 }
 
