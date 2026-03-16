@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>개인정보 설정</title>
+</head>
+
+<body>
+
+<h2>개인정보 설정</h2>
+
+<input id="age" placeholder="나이"><br><br>
+
+<select id="gender">
+<option value="">성별</option>
+<option value="남">남</option>
+<option value="여">여</option>
+</select><br><br>
+
+<input id="pw" type="password" placeholder="새 비밀번호"><br><br>
+
+<button onclick="save()">저장</button>
+
+<script>
+
+var user=localStorage.getItem("loginUser");
+
+var users=JSON.parse(localStorage.getItem("users"))||[];
+
+function save(){
+
+var age=document.getElementById("age").value;
+var gender=document.getElementById("gender").value;
+var pw=document.getElementById("pw").value;
+
+users.forEach(function(u){
+
+if(u.nickname===user){
+
+if(age!=""){u.age=age;}
+if(gender!=""){u.gender=gender;}
+if(pw!=""){u.pw=pw;}
+
+}
+
+});
+
+localStorage.setItem("users",JSON.stringify(users));
+
+alert("저장 완료");
+
+window.location.href="index.html";
+
+}
+
+</script>
+
+</body>
+</html>
