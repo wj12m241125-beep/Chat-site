@@ -120,11 +120,16 @@ window.location.href="login.html";
 
 var roomIndex=localStorage.getItem("currentRoom");
 
+function loadRoom(){
+
 var rooms=JSON.parse(localStorage.getItem("rooms"))||[];
 
 var room=rooms[roomIndex];
 
-/* 구조 생성 */
+if(!room){
+window.location.href="index.html";
+return;
+}
 
 if(!room.users){
 room.users=[];
@@ -134,25 +139,21 @@ if(!room.messages){
 room.messages=[];
 }
 
-/* 방 제목 */
-
 document.getElementById("roomTitle").innerText=room.title;
 
 /* 접속자 추가 */
 
 if(!room.users.includes(user)){
 room.users.push(user);
-}
-
-/* 저장 */
-
 rooms[roomIndex]=room;
-
 localStorage.setItem("rooms",JSON.stringify(rooms));
+}
 
 /* 접속자 목록 */
 
 var userList=document.getElementById("userList");
+
+userList.innerHTML="";
 
 room.users.forEach(function(u){
 
@@ -172,6 +173,8 @@ userList.innerHTML+=`
 
 var msgBox=document.getElementById("messages");
 
+msgBox.innerHTML="";
+
 room.messages.forEach(function(m){
 
 msgBox.innerHTML+=`
@@ -179,6 +182,8 @@ msgBox.innerHTML+=`
 `;
 
 });
+
+}
 
 /* 메시지 보내기 */
 
@@ -190,6 +195,10 @@ if(text==""){
 return;
 }
 
+var rooms=JSON.parse(localStorage.getItem("rooms"))||[];
+
+var room=rooms[roomIndex];
+
 room.messages.push({
 user:user,
 text:text
@@ -199,9 +208,17 @@ rooms[roomIndex]=room;
 
 localStorage.setItem("rooms",JSON.stringify(rooms));
 
-location.reload();
+document.getElementById("msg").value="";
+
+loadRoom();
 
 }
+
+/* 자동 업데이트 */
+
+setInterval(loadRoom,1000);
+
+loadRoom();
 
 /* 방 나가기 */
 
