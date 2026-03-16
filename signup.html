@@ -1,63 +1,47 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>비프챗 회원가입</title>
-
-<style>
-
-body{
-font-family:Arial;
-background:#f4f4f4;
-text-align:center;
-margin-top:100px;
-}
-
-input{
-padding:10px;
-margin:10px;
-width:200px;
-}
-
-button{
-padding:10px 20px;
-font-size:16px;
-}
-
-</style>
-
+<meta charset="UTF-8">
+<title>회원가입</title>
 </head>
 
 <body>
 
-<h1>비프챗 회원가입</h1>
+<h2>회원가입</h2>
 
-<input id="id" placeholder="아이디"><br>
-<input id="pw" type="password" placeholder="비밀번호"><br>
+<input id="nickname" placeholder="별명"><br><br>
+<input id="age" placeholder="나이"><br><br>
+
+<select id="gender">
+<option value="">성별 선택</option>
+<option value="남">남</option>
+<option value="여">여</option>
+</select><br><br>
+
+<input id="pw" type="password" placeholder="비밀번호"><br><br>
+
 <button onclick="signup()">가입하기</button>
 
-<button>가입하기</button>
-
-<p>
-이미 계정이 있나요?  
-<a href="login.html">로그인</a>
-</p>
-
-  <script>
+<script>
 
 function signup(){
 
-var id = document.getElementById("id").value;
-var pw = document.getElementById("pw").value;
+var nickname=document.getElementById("nickname").value;
+var age=document.getElementById("age").value;
+var gender=document.getElementById("gender").value;
+var pw=document.getElementById("pw").value;
 
-if(id=="" || pw==""){
-alert("아이디와 비밀번호 입력");
+if(nickname==""||age==""||gender==""||pw==""){
+alert("모든 정보를 입력하세요");
 return;
 }
 
-var users = JSON.parse(localStorage.getItem("users")) || [];
+var users=JSON.parse(localStorage.getItem("users"))||[];
 
 users.push({
-id:id,
+nickname:nickname,
+age:age,
+gender:gender,
 pw:pw
 });
 
