@@ -41,5 +41,15 @@ window.location.href = "rooms.html";
 
 </script>
 
+<script>
+
+var user = localStorage.getItem("loginUser");
+
+if(!user){
+window.location.href = "login.html";
+}
+
+</script>
+
 </body>
 </html>
