@@ -9,13 +9,11 @@
 body{
 margin:0;
 font-family:Arial;
-background:#f5f5f5;
 height:100vh;
 display:flex;
 flex-direction:column;
+background:#f5f5f5;
 }
-
-/* 상단 */
 
 .top{
 background:#111;
@@ -24,14 +22,10 @@ padding:15px;
 font-size:20px;
 }
 
-/* 전체 구조 */
-
 .container{
 flex:1;
 display:flex;
 }
-
-/* 왼쪽 사용자 목록 */
 
 .users{
 width:200px;
@@ -40,16 +34,10 @@ border-right:1px solid #ddd;
 padding:10px;
 }
 
-.users h3{
-margin-top:0;
-}
-
 .user{
 padding:6px;
 border-bottom:1px solid #eee;
 }
-
-/* 채팅 영역 */
 
 .chatArea{
 flex:1;
@@ -57,21 +45,15 @@ display:flex;
 flex-direction:column;
 }
 
-/* 메시지 영역 */
-
 .messages{
 flex:1;
 padding:15px;
 overflow-y:auto;
 }
 
-/* 메시지 */
-
 .msg{
 margin-bottom:10px;
 }
-
-/* 입력 영역 */
 
 .inputArea{
 display:flex;
@@ -92,7 +74,6 @@ width:90px;
 background:#111;
 color:white;
 border:none;
-font-size:16px;
 cursor:pointer;
 }
 
@@ -109,7 +90,6 @@ cursor:pointer;
 <div class="users">
 
 <h3>접속자</h3>
-
 <div id="userList"></div>
 
 </div>
@@ -144,25 +124,37 @@ var rooms=JSON.parse(localStorage.getItem("rooms"))||[];
 
 var room=rooms[roomIndex];
 
+/* 구조 생성 */
+
+if(!room.users){
+room.users=[];
+}
+
+if(!room.messages){
+room.messages=[];
+}
+
+/* 방 제목 */
+
 document.getElementById("roomTitle").innerText=room.title;
-
-var messages=JSON.parse(localStorage.getItem("messages"))||[];
-
-var users=JSON.parse(localStorage.getItem("roomUsers"))||[];
 
 /* 접속자 추가 */
 
-if(!users.includes(user)){
-users.push(user);
+if(!room.users.includes(user)){
+room.users.push(user);
 }
 
-localStorage.setItem("roomUsers",JSON.stringify(users));
+/* 저장 */
+
+rooms[roomIndex]=room;
+
+localStorage.setItem("rooms",JSON.stringify(rooms));
 
 /* 접속자 목록 */
 
 var userList=document.getElementById("userList");
 
-users.forEach(function(u){
+room.users.forEach(function(u){
 
 var crown="";
 
@@ -180,7 +172,7 @@ userList.innerHTML+=`
 
 var msgBox=document.getElementById("messages");
 
-messages.forEach(function(m){
+room.messages.forEach(function(m){
 
 msgBox.innerHTML+=`
 <div class="msg"><b>${m.user}</b> : ${m.text}</div>
@@ -198,40 +190,38 @@ if(text==""){
 return;
 }
 
-messages.push({
+room.messages.push({
 user:user,
 text:text
 });
 
-localStorage.setItem("messages",JSON.stringify(messages));
+rooms[roomIndex]=room;
+
+localStorage.setItem("rooms",JSON.stringify(rooms));
 
 location.reload();
 
 }
 
-/* 방 나가면 실행 */
+/* 방 나가기 */
 
 window.onbeforeunload=function(){
 
-var users=JSON.parse(localStorage.getItem("roomUsers"))||[];
+var rooms=JSON.parse(localStorage.getItem("rooms"))||[];
 
-users=users.filter(function(u){
+var room=rooms[roomIndex];
+
+room.users=room.users.filter(function(u){
 return u!==user;
 });
 
-localStorage.setItem("roomUsers",JSON.stringify(users));
-
-/* 아무도 없으면 방 삭제 */
-
-if(users.length===0){
-
-var rooms=JSON.parse(localStorage.getItem("rooms"))||[];
-
+if(room.users.length===0){
 rooms.splice(roomIndex,1);
+}else{
+rooms[roomIndex]=room;
+}
 
 localStorage.setItem("rooms",JSON.stringify(rooms));
-
-}
 
 };
 
