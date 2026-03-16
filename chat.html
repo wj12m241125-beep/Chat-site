@@ -1,33 +1,99 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>채팅방</title>
+<meta charset="UTF-8">
+<title>Beep Chat</title>
 
 <style>
 
 body{
+margin:0;
 font-family:Arial;
-text-align:center;
-background:#f4f4f4;
+background:#f5f5f5;
+height:100vh;
+display:flex;
+flex-direction:column;
 }
 
-#chat{
-margin:20px auto;
-width:300px;
-background:white;
-padding:20px;
-height:300px;
-overflow:auto;
-border-radius:10px;
+/* 상단 */
+
+.top{
+background:#111;
+color:white;
+padding:15px;
+font-size:20px;
 }
 
-input{
-padding:10px;
+/* 전체 구조 */
+
+.container{
+flex:1;
+display:flex;
+}
+
+/* 왼쪽 사용자 목록 */
+
+.users{
 width:200px;
+background:white;
+border-right:1px solid #ddd;
+padding:10px;
 }
 
-button{
+.users h3{
+margin-top:0;
+}
+
+.user{
+padding:6px;
+border-bottom:1px solid #eee;
+}
+
+/* 채팅 영역 */
+
+.chatArea{
+flex:1;
+display:flex;
+flex-direction:column;
+}
+
+/* 메시지 영역 */
+
+.messages{
+flex:1;
+padding:15px;
+overflow-y:auto;
+}
+
+/* 메시지 */
+
+.msg{
+margin-bottom:10px;
+}
+
+/* 입력 영역 */
+
+.inputArea{
+display:flex;
 padding:10px;
+background:white;
+border-top:1px solid #ddd;
+}
+
+.inputBox{
+flex:1;
+padding:10px;
+font-size:16px;
+border:1px solid #ccc;
+}
+
+.sendBtn{
+width:90px;
+background:#111;
+color:white;
+border:none;
+font-size:16px;
+cursor:pointer;
 }
 
 </style>
@@ -36,39 +102,111 @@ padding:10px;
 
 <body>
 
-<h1 id="roomTitle"></h1>
+<div class="top" id="roomTitle"></div>
 
-<div id="chat"></div>
+<div class="container">
 
-<input id="msg" placeholder="메시지 입력">
-<button onclick="send()">보내기</button>
+<div class="users">
+
+<h3>접속자</h3>
+
+<div id="userList"></div>
+
+</div>
+
+<div class="chatArea">
+
+<div class="messages" id="messages"></div>
+
+<div class="inputArea">
+
+<input id="msg" class="inputBox" placeholder="메시지 입력">
+
+<button class="sendBtn" onclick="send()">보내기</button>
+
+</div>
+
+</div>
+
+</div>
 
 <script>
 
-var room = localStorage.getItem("currentRoom");
-var name = localStorage.getItem("nickname");
-
-document.getElementById("roomTitle").innerText = room;
-
-var users = JSON.parse(localStorage.getItem("users")) || [];
-
-var now = Date.now();
-
-users.push({
-name:name,
-time:now
-});
-
-localStorage.setItem("users", JSON.stringify(users));
-
-</script>
-
-<script>
-
-var user = localStorage.getItem("loginUser");
+var user=localStorage.getItem("loginUser");
 
 if(!user){
-window.location.href = "login.html";
+window.location.href="login.html";
+}
+
+var roomIndex=localStorage.getItem("currentRoom");
+
+var rooms=JSON.parse(localStorage.getItem("rooms"))||[];
+
+var room=rooms[roomIndex];
+
+document.getElementById("roomTitle").innerText=room.title;
+
+var messages=JSON.parse(localStorage.getItem("messages"))||[];
+
+var users=JSON.parse(localStorage.getItem("roomUsers"))||[];
+
+/* 접속자 추가 */
+
+if(!users.includes(user)){
+users.push(user);
+}
+
+localStorage.setItem("roomUsers",JSON.stringify(users));
+
+/* 접속자 목록 */
+
+var userList=document.getElementById("userList");
+
+users.forEach(function(u){
+
+var crown="";
+
+if(u===room.owner){
+crown=" 👑";
+}
+
+userList.innerHTML+=`
+<div class="user">${u}${crown}</div>
+`;
+
+});
+
+/* 메시지 출력 */
+
+var msgBox=document.getElementById("messages");
+
+messages.forEach(function(m){
+
+msgBox.innerHTML+=`
+<div class="msg"><b>${m.user}</b> : ${m.text}</div>
+`;
+
+});
+
+/* 메시지 보내기 */
+
+function send(){
+
+var text=document.getElementById("msg").value;
+
+if(text==""){
+return;
+}
+
+messages.push({
+user:user,
+text:text
+});
+
+localStorage.setItem("messages",JSON.stringify(messages));
+
+location.reload();
+
 }
 
 </script>
