@@ -10,7 +10,7 @@ background:#f2f2f2;
 text-align:center;
 }
 
-header{
+header{<button onclick="logout()">로그아웃</button>
 background:#222;
 color:white;
 padding:15px;
@@ -68,6 +68,18 @@ var user = localStorage.getItem("loginUser");
 
 if(!user){
 window.location.href="login.html";
+}
+
+</script>
+
+<script>
+
+function logout(){
+
+localStorage.removeItem("loginUser");
+
+window.location.href = "login.html";
+
 }
 
 </script>
