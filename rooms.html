@@ -5,49 +5,13 @@
 <title>beep chat</title>
 
 <style>
-body{
-font-family:Arial;
-background:#f2f2f2;
-margin:0;
-padding:20px;
-}
-
-#top{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:20px;
-}
-
-#categories{
-margin-bottom:15px;
-}
-
-.cat{
-margin-right:8px;
-padding:6px 12px;
-border:none;
-background:#ddd;
-cursor:pointer;
-border-radius:5px;
-}
-
-.cat.active{
-background:#4CAF50;
-color:white;
-}
-
-.room{
-background:white;
-padding:15px;
-margin-bottom:10px;
-border-radius:8px;
-cursor:pointer;
-}
-
-.room:hover{
-background:#eee;
-}
+body{font-family:Arial; background:#f2f2f2; margin:0; padding:20px;}
+#top{display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;}
+#categories{margin-bottom:15px;}
+.cat{margin-right:8px; padding:6px 12px; border:none; background:#ddd; cursor:pointer; border-radius:5px;}
+.cat.active{background:#4CAF50; color:white;}
+.room{background:white; padding:15px; margin-bottom:10px; border-radius:8px; cursor:pointer;}
+.room:hover{background:#eee;}
 </style>
 </head>
 
@@ -83,39 +47,25 @@ localStorage.setItem("rooms", JSON.stringify(rooms))
 }
 
 function getAgeCategory(){
-
 if(!age) return "기타"
-
 let n = parseInt(age)
-
 if(n<20) return "10대"
 if(n<30) return "20대"
 if(n<40) return "30대"
 if(n<50) return "40대"
 return "50대"
-
 }
 
 function setCategory(c){
-
 currentCategory=c
-
-document.querySelectorAll(".cat").forEach(b=>{
-b.classList.remove("active")
-})
-
+document.querySelectorAll(".cat").forEach(b=>b.classList.remove("active"))
 event.target.classList.add("active")
-
 render()
-
 }
 
 function render(){
-
 let box=document.getElementById("rooms")
 box.innerHTML=""
-
-rooms = rooms.filter(r=>r.users>0)
 
 rooms.forEach((r,i)=>{
 
@@ -136,22 +86,20 @@ alert("방이 가득 찼습니다")
 return
 }
 
+// 🔥 핵심 추가
+localStorage.setItem("currentUser", nickname)
 localStorage.setItem("currentRoom", r.title)
 
 rooms[i].users++
-
 save()
 
 location.href="chat.html"
-
 }
 
 box.appendChild(div)
-
 })
 
 save()
-
 }
 
 function createRoom(){
@@ -163,7 +111,6 @@ return
 }
 
 let title=prompt("방 제목")
-
 if(!title) return
 
 if(rooms.some(r=>r.title===title)){
@@ -172,14 +119,12 @@ return
 }
 
 let max=prompt("최대 인원")
-
 if(!max || isNaN(max)){
 alert("숫자를 입력해주세요")
 return
 }
 
 max=parseInt(max)
-
 if(max<2){
 alert("최소 2명 이상")
 return
@@ -196,17 +141,17 @@ age:age,
 category:category
 })
 
+// 🔥 핵심 추가
+localStorage.setItem("currentUser", nickname)
 localStorage.setItem("currentRoom", title)
 
 save()
 
 location.href="chat.html"
-
 }
 
 render()
 
 </script>
-
 </body>
 </html>
