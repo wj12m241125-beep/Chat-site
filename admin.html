@@ -4,97 +4,77 @@
 <meta charset="UTF-8">
 <title>관리자 페이지</title>
 <style>
-/* 관리자 버튼 */
 #adminBtn{
-  position:fixed;
-  bottom:10px;
-  left:10px;
-  background:#222;
-  color:white;
-  width:30px;
-  height:30px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  border-radius:6px;
-  font-size:14px;
+  position:fixed; bottom:10px; left:10px; background:#222; color:white;
+  width:30px; height:30px; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; border-radius:6px; font-size:14px;
 }
-
-/* 관리자 로그인/패널 박스 */
 .adminBox{
-  display:none;
-  position:fixed;
-  bottom:50px;
-  left:10px;
-  background:white;
-  border:1px solid #ccc;
-  padding:15px;
-  width:250px;
-  box-shadow:0 0 10px rgba(0,0,0,0.2);
+  display:none; position:fixed; bottom:50px; left:10px;
+  background:white; border:1px solid #ccc; padding:15px; width:300px;
+  box-shadow:0 0 10px rgba(0,0,0,0.2); max-height:80%; overflow:auto;
 }
-
-.adminBox input{
-  width:100%;
-  padding:6px;
-  margin-bottom:8px;
+.adminBox input, .adminBox select{
+  width:100%; padding:6px; margin-bottom:8px;
 }
-
-.adminBox button{
-  padding:6px 10px;
-  cursor:pointer;
-}
-
-#adminUsers button, #adminRooms button{
-  margin-left:5px;
-}
+.adminBox button{ padding:6px 10px; cursor:pointer; margin-bottom:5px; }
+#adminUsers button, #adminRooms button, #adminReports button{ margin-left:5px; }
+h3{ margin-top:15px; }
 </style>
 </head>
 <body>
 
-<!-- 관리자 버튼 -->
 <div id="adminBtn">⚙</div>
 
-<!-- 관리자 로그인 -->
 <div id="adminLogin" class="adminBox">
   <h3>관리자 로그인</h3>
   <input type="password" id="adminPass" placeholder="비밀번호">
   <button id="adminLoginBtn">접속</button>
 </div>
 
-<!-- 관리자 패널 -->
 <div id="adminPanel" class="adminBox">
   <h2>관리자 패널</h2>
-
+  
   <h3>유저 관리</h3>
   <ul id="adminUsers"></ul>
 
   <h3>방 관리</h3>
   <ul id="adminRooms"></ul>
 
+  <h3>신고 처리센터</h3>
+  <ul id="adminReports"></ul>
+
+  <h3>공지사항</h3>
+  <input type="text" id="noticeInput" placeholder="공지 입력">
+  <button id="addNoticeBtn">공지 등록</button>
+  <ul id="noticeList"></ul>
+
+  <h3>사이트 설정</h3>
+  <label>최대 유저 수:</label>
+  <input type="number" id="maxUsers" min="1">
+  <label>최대 방 수:</label>
+  <input type="number" id="maxRooms" min="1">
+  <button id="saveSettingsBtn">저장</button>
+
   <button id="closeAdminBtn">닫기</button>
 </div>
 
 <script>
-// 관리자 비밀번호
 const ADMIN_PASSWORD = "beepadmin";
 
-// localStorage 초기값 (테스트용)
-if(!localStorage.getItem("users")){
-  localStorage.setItem("users", JSON.stringify([
-    {nickname:"주인님", age:17},
-    {nickname:"손님1", age:16}
-  ]));
-}
+if(!localStorage.getItem("users")) localStorage.setItem("users", JSON.stringify([
+  {nickname:"주인님", age:17, role:"Owner"},
+  {nickname:"손님1", age:16, role:"Admin"}
+]));
+if(!localStorage.getItem("rooms")) localStorage.setItem("rooms", JSON.stringify([
+  {title:"방1"}, {title:"방2"}
+]));
+if(!localStorage.getItem("reports")) localStorage.setItem("reports", JSON.stringify([
+  {user:"손님1", reason:"도배"}
+]));
+if(!localStorage.getItem("notices")) localStorage.setItem("notices", JSON.stringify([]));
+if(!localStorage.getItem("settings")) localStorage.setItem("settings", JSON.stringify({maxUsers:100, maxRooms:50}));
 
-if(!localStorage.getItem("rooms")){
-  localStorage.setItem("rooms", JSON.stringify([
-    {title:"방1"},
-    {title:"방2"}
-  ]));
-}
-
-// 버튼 이벤트
 const adminBtn = document.getElementById("adminBtn");
 const adminLogin = document.getElementById("adminLogin");
 const adminLoginBtn = document.getElementById("adminLoginBtn");
@@ -104,57 +84,75 @@ const closeAdminBtn = document.getElementById("closeAdminBtn");
 adminBtn.addEventListener("click", ()=>{ adminLogin.style.display="block"; });
 closeAdminBtn.addEventListener("click", ()=>{ adminPanel.style.display="none"; });
 
-// 로그인 체크
 adminLoginBtn.addEventListener("click", ()=>{
   const pass = document.getElementById("adminPass").value;
   if(pass === ADMIN_PASSWORD){
     adminLogin.style.display="none";
     adminPanel.style.display="block";
     loadAdminData();
-  } else {
-    alert("비밀번호 틀림");
-  }
+  } else { alert("비밀번호 틀림"); }
 });
 
-// 데이터 불러오기
 function loadAdminData(){
   const users = JSON.parse(localStorage.getItem("users")) || [];
   const rooms = JSON.parse(localStorage.getItem("rooms")) || [];
+  const reports = JSON.parse(localStorage.getItem("reports")) || [];
+  const notices = JSON.parse(localStorage.getItem("notices")) || [];
+  const settings = JSON.parse(localStorage.getItem("settings")) || {};
 
   const userList = document.getElementById("adminUsers");
   const roomList = document.getElementById("adminRooms");
+  const reportList = document.getElementById("adminReports");
+  const noticeList = document.getElementById("noticeList");
+  const maxUsersInput = document.getElementById("maxUsers");
+  const maxRoomsInput = document.getElementById("maxRooms");
 
   userList.innerHTML = "";
   roomList.innerHTML = "";
+  reportList.innerHTML = "";
+  noticeList.innerHTML = "";
 
-  // 유저 목록
   users.forEach((u,i)=>{
     const li = document.createElement("li");
-    li.textContent = `${u.nickname} (${u.age}) `;
+    li.textContent = `${u.nickname} (${u.age}) [${u.role}] `;
 
     const btn = document.createElement("button");
     btn.textContent = "차단";
     btn.addEventListener("click", ()=>banUser(i));
-
     li.appendChild(btn);
     userList.appendChild(li);
   });
 
-  // 방 목록
   rooms.forEach((r,i)=>{
     const li = document.createElement("li");
     li.textContent = r.title + " ";
-
     const btn = document.createElement("button");
     btn.textContent = "삭제";
     btn.addEventListener("click", ()=>deleteRoom(i));
-
     li.appendChild(btn);
     roomList.appendChild(li);
   });
+
+  reports.forEach((r,i)=>{
+    const li = document.createElement("li");
+    li.textContent = `신고: ${r.user} - ${r.reason} `;
+    const btn = document.createElement("button");
+    btn.textContent = "경고";
+    btn.addEventListener("click", ()=>warnUser(r.user));
+    li.appendChild(btn);
+    reportList.appendChild(li);
+  });
+
+  notices.forEach((n,i)=>{
+    const li = document.createElement("li");
+    li.textContent = n;
+    noticeList.appendChild(li);
+  });
+
+  maxUsersInput.value = settings.maxUsers;
+  maxRoomsInput.value = settings.maxRooms;
 }
 
-// 유저 차단
 function banUser(i){
   let users = JSON.parse(localStorage.getItem("users")) || [];
   users.splice(i,1);
@@ -162,14 +160,32 @@ function banUser(i){
   loadAdminData();
 }
 
-// 방 삭제
 function deleteRoom(i){
   let rooms = JSON.parse(localStorage.getItem("rooms")) || [];
   rooms.splice(i,1);
   localStorage.setItem("rooms", JSON.stringify(rooms));
   loadAdminData();
 }
-</script>
 
+function warnUser(nickname){
+  alert(`${nickname}님에게 경고 메시지 전송됨`);
+}
+
+document.getElementById("addNoticeBtn").addEventListener("click", ()=>{
+  const notice = document.getElementById("noticeInput").value.trim();
+  if(!notice) return;
+  const notices = JSON.parse(localStorage.getItem("notices")) || [];
+  notices.push(notice);
+  localStorage.setItem("notices", JSON.stringify(notices));
+  document.getElementById("noticeInput").value="";
+  loadAdminData();
+});
+
+document.getElementById("saveSettingsBtn").addEventListener("click", ()=>{
+  const settings = {maxUsers:parseInt(document.getElementById("maxUsers").value), maxRooms:parseInt(document.getElementById("maxRooms").value)};
+  localStorage.setItem("settings", JSON.stringify(settings));
+  alert("설정 저장됨");
+});
+</script>
 </body>
 </html>
