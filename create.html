@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
 <title>방 만들기</title>
 </head>
 
@@ -8,11 +9,8 @@
 
 <h1>새 채팅방 만들기</h1>
 
-<input id="roomName" placeholder="방 이름 입력">
 <input id="roomTitle" placeholder="방 제목"><br>
-<input id="roomDesc" placeholder="방 설명"><br>
-<button onclick="createRoom()">방 만들기</button>
-<br><br>
+<input id="roomMax" placeholder="최대 인원"><br>
 
 <button onclick="createRoom()">방 생성</button>
 
@@ -20,50 +18,58 @@
 
 function createRoom(){
 
-var name = document.getElementById("roomName").value;
+let title = document.getElementById("roomTitle").value;
+let max = document.getElementById("roomMax").value;
 
-if(name === ""){
-alert("방 이름을 입력하세요");
+let nickname = localStorage.getItem("nickname");
+let age = localStorage.getItem("age");
+
+if(!nickname){
+alert("로그인 후 이용해주세요");
+location.href="login.html";
 return;
 }
 
-var rooms = JSON.parse(localStorage.getItem("rooms")) || [];
+if(!title){
+alert("방 제목 입력");
+return;
+}
 
-var room = {
-name: name,
-admin: "me"
-};
+if(!max || isNaN(max)){
+alert("최대 인원 숫자로 입력");
+return;
+}
 
-rooms.push(room);
+max = parseInt(max);
+
+let rooms = JSON.parse(localStorage.getItem("rooms") || "[]");
+
+if(rooms.some(r=>r.title===title)){
+alert("이미 존재하는 방");
+return;
+}
+
+rooms.push({
+title: title,
+users: 1,
+max: max,
+owner: nickname,
+age: age,
+category: "전체"
+});
+
+// 🔥 핵심
+localStorage.setItem("currentUser", nickname);
+localStorage.setItem("currentRoom", title);
 
 localStorage.setItem("rooms", JSON.stringify(rooms));
 
-window.location.href = "rooms.html";
-
-}
-
-function createRoom(){
-
-var title = document.getElementById("roomTitle").value;
-var desc = document.getElementById("roomDesc").value;
-
-var user = localStorage.getItem("loginUser");
-
-var rooms = JSON.parse(localStorage.getItem("rooms")) || [];
-
-rooms.push({
-title:title,
-desc:desc,
-owner:user
-});
-
-localStorage.setItem("rooms",JSON.stringify(rooms));
-
 alert("방 생성 완료");
 
-window.location.href="rooms.html";
-
+location.href="chat.html";
 }
+
+</script>
 
 </body>
 </html>
