@@ -12,6 +12,7 @@ body{margin:0; display:flex; font-family:sans-serif;}
 #inputBox input{flex:1; padding:10px;}
 #inputBox button{padding:10px;}
 .owner{color:red; font-weight:bold;}
+.system{color:orange;}
 </style>
 </head>
 <body>
@@ -77,11 +78,88 @@ box.innerHTML = "";
 
 messages.forEach(m=>{
 const div = document.createElement("div");
+
+if(m.system){
+div.innerHTML = `<span class="system">${m.text}</span>`;
+}else{
 div.textContent = `${m.user}: ${m.text}`;
+}
+
 box.appendChild(div);
 });
 
 box.scrollTop = box.scrollHeight;
+}
+
+// ✅ 시스템 메시지
+function addSystemMessage(text){
+messages.push({
+system:true,
+text:text
+});
+localStorage.setItem("messages_"+currentRoom, JSON.stringify(messages));
+renderMessages();
+}
+
+// 🔥 명령어 처리
+function handleCommand(text){
+
+let args = text.split(" ");
+
+switch(args[0]){
+
+case "/신고":
+let target = args[1];
+let reason = args.slice(2).join(" ");
+
+if(!target){
+addSystemMessage("사용법: /신고 닉네임 이유");
+return;
+}
+
+// 신고 저장
+let reports = JSON.parse(localStorage.getItem("reports") || "[]");
+
+reports.push({
+target:target,
+reason:reason || "사유 없음",
+reporter:currentUser,
+room:currentRoom,
+time:new Date().toLocaleString()
+});
+
+localStorage.setItem("reports", JSON.stringify(reports));
+
+addSystemMessage(`🚨 ${target} 신고 완료`);
+break;
+
+case "/공지":
+if(room.owner !== currentUser){
+addSystemMessage("❌ 방장만 가능");
+return;
+}
+addSystemMessage("📢 " + args.slice(1).join(" "));
+break;
+
+case "/강퇴":
+if(room.owner !== currentUser){
+addSystemMessage("❌ 방장만 가능");
+return;
+}
+
+let kickTarget = args[1];
+
+users = users.filter(u=>u !== kickTarget);
+localStorage.setItem("roomUsers_"+currentRoom, JSON.stringify(users));
+
+addSystemMessage(`🚫 ${kickTarget} 강퇴됨`);
+renderUsers();
+break;
+
+default:
+addSystemMessage("❓ 없는 명령어");
+}
+
 }
 
 // 전송
@@ -89,6 +167,13 @@ function sendMessage(){
 const input = document.getElementById("msgInput");
 const text = input.value.trim();
 if(!text) return;
+
+// 🔥 명령어 실행
+if(text.startsWith("/")){
+handleCommand(text);
+input.value="";
+return;
+}
 
 messages.push({
 user: currentUser,
