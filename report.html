@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body>
+
+<h2>신고</h2>
+
+<input id="reason" placeholder="이유"><br>
+<button onclick="send()">신고</button>
+
+<script>
+
+function send(){
+
+let target = localStorage.getItem("reportTarget");
+let reason = document.getElementById("reason").value;
+let user = localStorage.getItem("currentUser");
+
+let reports = JSON.parse(localStorage.getItem("reports") || "[]");
+
+reports.push({
+target:target,
+reason:reason,
+user:user
+});
+
+localStorage.setItem("reports", JSON.stringify(reports));
+
+alert("완료");
+location.href="chat.html";
+}
+
+</script>
+
+</body>
+</html>
