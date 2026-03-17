@@ -11,11 +11,11 @@ body{margin:0; display:flex; font-family:sans-serif;}
 #inputBox{display:flex;}
 #inputBox input{flex:1; padding:10px;}
 #inputBox button{padding:10px;}
-.owner{color:red; font-weight:bold;}
 .system{color:orange;}
 #exitBtn{position:absolute; top:10px; right:10px;}
 </style>
 </head>
+
 <body>
 
 <button id="exitBtn">나가기</button>
@@ -29,61 +29,131 @@ body{margin:0; display:flex; font-family:sans-serif;}
 <div id="messages"></div>
 
 <div id="inputBox">
-<input type="text" id="msgInput" placeholder="메시지 입력">
+<input type="text" id="msgInput">
 <button id="sendBtn">전송</button>
 </div>
 </div>
 
 <script type="module">
 
-// 🔥 Firebase
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import {
+getFirestore,
+collection,
+addDoc,
+onSnapshot,
+query,
+orderBy,
+deleteDoc,
+doc,
+getDocs
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBAplZ2_XOS18w2zGvkzpvWIIAv2LJAM3A",
-  authDomain: "chat-site-86ccf.firebaseapp.com",
-  projectId: "chat-site-86ccf"
+apiKey: "AIzaSyBAplZ2_XOS18w2zGvkzpvWIIAv2LJAM3A",
+authDomain: "chat-site-86ccf.firebaseapp.com",
+projectId: "chat-site-86ccf"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 기존 값
 const currentUser = localStorage.getItem("currentUser");
 const currentRoom = localStorage.getItem("currentRoom");
 
 if(!currentUser || !currentRoom){
 alert("잘못된 접근");
-location.href = "rooms.html";
+location.href="rooms.html";
 }
 
-// 🔥 유저 목록 (로컬 유지)
-let users = JSON.parse(localStorage.getItem("roomUsers_"+currentRoom)) || [];
-if(!users.includes(currentUser)){
-users.push(currentUser);
-localStorage.setItem("roomUsers_"+currentRoom, JSON.stringify(users));
-}
+// 🔥 내 유저 문서 id 저장용
+let myDocId = null;
 
-// 유저 렌더
-function renderUsers(){
+// =======================
+// 👥 접속자 추가
+// =======================
+async function joinRoom(){
+const docRef = await addDoc(collection(db,"roomUsers_"+currentRoom),{
+user: currentUser,
+time: Date.now()
+});
+myDocId = docRef.id;
+}
+await joinRoom();
+
+// =======================
+// 👥 접속자 실시간 표시
+// =======================
+const userQuery = query(collection(db,"roomUsers_"+currentRoom));
+
+onSnapshot(userQuery,(snapshot)=>{
+
 const list = document.getElementById("userList");
-list.innerHTML = "";
+list.innerHTML="";
 
-users.forEach(u=>{
+let count = 0;
+
+snapshot.forEach(doc=>{
+const data = doc.data();
+count++;
+
 const li = document.createElement("li");
-li.textContent = u;
+li.textContent = data.user;
 list.appendChild(li);
+});
+
+// 🔥 방 인원 업데이트
+updateRoomCount(count);
+
+// 🔥 인원 0명 → 방 삭제
+if(count === 0){
+deleteRoom();
+}
+
+});
+
+// =======================
+// 🔥 방 인원 업데이트
+// =======================
+async function updateRoomCount(count){
+const rooms = await getDocs(collection(db,"rooms"));
+
+rooms.forEach(async r=>{
+if(r.data().title === currentRoom){
+await deleteDoc(doc(db,"rooms",r.id));
+await addDoc(collection(db,"rooms"),{
+...r.data(),
+users: count
+});
+}
 });
 }
 
-// 🔥 실시간 메시지 (핵심)
-const q = query(collection(db, "messages_"+currentRoom), orderBy("time"));
+// =======================
+// 🔥 방 삭제
+// =======================
+async function deleteRoom(){
+const rooms = await getDocs(collection(db,"rooms"));
 
-onSnapshot(q,(snapshot)=>{
+rooms.forEach(async r=>{
+if(r.data().title === currentRoom){
+await deleteDoc(doc(db,"rooms",r.id));
+}
+});
+}
+
+// =======================
+// 💬 실시간 채팅
+// =======================
+const msgQuery = query(
+collection(db,"messages_"+currentRoom),
+orderBy("time")
+);
+
+onSnapshot(msgQuery,(snapshot)=>{
 
 const box = document.getElementById("messages");
-box.innerHTML = "";
+box.innerHTML="";
 
 snapshot.forEach(doc=>{
 const m = doc.data();
@@ -102,56 +172,14 @@ box.scrollTop = box.scrollHeight;
 
 });
 
-// 시스템 메시지
-async function addSystemMessage(text){
-await addDoc(collection(db,"messages_"+currentRoom),{
-system:true,
-text:text,
-time:Date.now()
-});
-}
-
-// 명령어
-async function handleCommand(text){
-
-let args = text.split(" ");
-
-switch(args[0]){
-
-case "/신고":
-addSystemMessage(`🚨 ${args[1]} 신고됨`);
-break;
-
-case "/공지":
-addSystemMessage("📢 " + args.slice(1).join(" "));
-break;
-
-case "/강퇴":
-let kickTarget = args[1];
-users = users.filter(u=>u !== kickTarget);
-localStorage.setItem("roomUsers_"+currentRoom, JSON.stringify(users));
-renderUsers();
-addSystemMessage(`🚫 ${kickTarget} 강퇴됨`);
-break;
-
-default:
-addSystemMessage("❓ 없는 명령어");
-}
-
-}
-
-// 메시지 전송
+// =======================
+// 💬 메시지 전송
+// =======================
 window.sendMessage = async function(){
 
-const input = document.getElementById("msgInput");
-const text = input.value.trim();
+let input = document.getElementById("msgInput");
+let text = input.value.trim();
 if(!text) return;
-
-if(text.startsWith("/")){
-handleCommand(text);
-input.value="";
-return;
-}
 
 await addDoc(collection(db,"messages_"+currentRoom),{
 user: currentUser,
@@ -162,29 +190,30 @@ time: Date.now()
 input.value="";
 };
 
-// 이벤트
 document.getElementById("sendBtn").onclick = sendMessage;
 document.getElementById("msgInput").addEventListener("keypress", e=>{
-if(e.key === "Enter") sendMessage();
+if(e.key==="Enter") sendMessage();
 });
 
-// 🔥 나가기 버튼
-document.getElementById("exitBtn").onclick = function(){
+// =======================
+// 🚪 나가기
+// =======================
+document.getElementById("exitBtn").onclick = async function(){
 
-users = users.filter(u => u !== currentUser);
-localStorage.setItem("roomUsers_"+currentRoom, JSON.stringify(users));
-
-// 방 비었으면 삭제
-if(users.length === 0){
-localStorage.removeItem("roomUsers_"+currentRoom);
+// 🔥 내 유저 삭제
+if(myDocId){
+await deleteDoc(doc(db,"roomUsers_"+currentRoom, myDocId));
 }
 
-location.href = "rooms.html";
-
+location.href="rooms.html";
 };
 
-// 실행
-renderUsers();
+// 🔥 창 닫아도 자동 나가기
+window.addEventListener("beforeunload", async ()=>{
+if(myDocId){
+await deleteDoc(doc(db,"roomUsers_"+currentRoom, myDocId));
+}
+});
 
 </script>
 
