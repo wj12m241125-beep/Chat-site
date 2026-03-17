@@ -13,9 +13,12 @@ body{margin:0; display:flex; font-family:sans-serif;}
 #inputBox button{padding:10px;}
 .owner{color:red; font-weight:bold;}
 .system{color:orange;}
+#exitBtn{position:absolute; top:10px; right:10px;}
 </style>
 </head>
 <body>
+
+<button id="exitBtn">나가기</button>
 
 <div id="users">
 <h3>접속자</h3>
@@ -31,8 +34,22 @@ body{margin:0; display:flex; font-family:sans-serif;}
 </div>
 </div>
 
-<script>
+<script type="module">
 
+// 🔥 Firebase
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBAplZ2_XOS18w2zGvkzpvWIIAv2LJAM3A",
+  authDomain: "chat-site-86ccf.firebaseapp.com",
+  projectId: "chat-site-86ccf"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 기존 값
 const currentUser = localStorage.getItem("currentUser");
 const currentRoom = localStorage.getItem("currentRoom");
 
@@ -41,42 +58,35 @@ alert("잘못된 접근");
 location.href = "rooms.html";
 }
 
-let rooms = JSON.parse(localStorage.getItem("rooms")) || [];
-let messages = JSON.parse(localStorage.getItem("messages_"+currentRoom)) || [];
+// 🔥 유저 목록 (로컬 유지)
 let users = JSON.parse(localStorage.getItem("roomUsers_"+currentRoom)) || [];
-
-const room = rooms.find(r => r.title === currentRoom);
-
-// 유저 추가
 if(!users.includes(currentUser)){
 users.push(currentUser);
 localStorage.setItem("roomUsers_"+currentRoom, JSON.stringify(users));
 }
 
-// 유저 목록
+// 유저 렌더
 function renderUsers(){
 const list = document.getElementById("userList");
 list.innerHTML = "";
 
 users.forEach(u=>{
 const li = document.createElement("li");
-
-if(room && room.owner === u){
-li.innerHTML = `<span class="owner">👑 ${u}</span>`;
-} else {
 li.textContent = u;
-}
-
 list.appendChild(li);
 });
 }
 
-// 메시지
-function renderMessages(){
+// 🔥 실시간 메시지 (핵심)
+const q = query(collection(db, "messages_"+currentRoom), orderBy("time"));
+
+onSnapshot(q,(snapshot)=>{
+
 const box = document.getElementById("messages");
 box.innerHTML = "";
 
-messages.forEach(m=>{
+snapshot.forEach(doc=>{
+const m = doc.data();
 const div = document.createElement("div");
 
 if(m.system){
@@ -89,71 +99,39 @@ box.appendChild(div);
 });
 
 box.scrollTop = box.scrollHeight;
-}
 
-// ✅ 시스템 메시지
-function addSystemMessage(text){
-messages.push({
-system:true,
-text:text
 });
-localStorage.setItem("messages_"+currentRoom, JSON.stringify(messages));
-renderMessages();
+
+// 시스템 메시지
+async function addSystemMessage(text){
+await addDoc(collection(db,"messages_"+currentRoom),{
+system:true,
+text:text,
+time:Date.now()
+});
 }
 
-// 🔥 명령어 처리
-function handleCommand(text){
+// 명령어
+async function handleCommand(text){
 
 let args = text.split(" ");
 
 switch(args[0]){
 
 case "/신고":
-let target = args[1];
-let reason = args.slice(2).join(" ");
-
-if(!target){
-addSystemMessage("사용법: /신고 닉네임 이유");
-return;
-}
-
-// 신고 저장
-let reports = JSON.parse(localStorage.getItem("reports") || "[]");
-
-reports.push({
-target:target,
-reason:reason || "사유 없음",
-reporter:currentUser,
-room:currentRoom,
-time:new Date().toLocaleString()
-});
-
-localStorage.setItem("reports", JSON.stringify(reports));
-
-addSystemMessage(`🚨 ${target} 신고 완료`);
+addSystemMessage(`🚨 ${args[1]} 신고됨`);
 break;
 
 case "/공지":
-if(room.owner !== currentUser){
-addSystemMessage("❌ 방장만 가능");
-return;
-}
 addSystemMessage("📢 " + args.slice(1).join(" "));
 break;
 
 case "/강퇴":
-if(room.owner !== currentUser){
-addSystemMessage("❌ 방장만 가능");
-return;
-}
-
 let kickTarget = args[1];
-
 users = users.filter(u=>u !== kickTarget);
 localStorage.setItem("roomUsers_"+currentRoom, JSON.stringify(users));
-
-addSystemMessage(`🚫 ${kickTarget} 강퇴됨`);
 renderUsers();
+addSystemMessage(`🚫 ${kickTarget} 강퇴됨`);
 break;
 
 default:
@@ -162,39 +140,51 @@ addSystemMessage("❓ 없는 명령어");
 
 }
 
-// 전송
-function sendMessage(){
+// 메시지 전송
+window.sendMessage = async function(){
+
 const input = document.getElementById("msgInput");
 const text = input.value.trim();
 if(!text) return;
 
-// 🔥 명령어 실행
 if(text.startsWith("/")){
 handleCommand(text);
 input.value="";
 return;
 }
 
-messages.push({
+await addDoc(collection(db,"messages_"+currentRoom),{
 user: currentUser,
-text: text
+text: text,
+time: Date.now()
 });
 
-localStorage.setItem("messages_"+currentRoom, JSON.stringify(messages));
-
-input.value = "";
-renderMessages();
-}
+input.value="";
+};
 
 // 이벤트
-document.getElementById("sendBtn").addEventListener("click", sendMessage);
+document.getElementById("sendBtn").onclick = sendMessage;
 document.getElementById("msgInput").addEventListener("keypress", e=>{
 if(e.key === "Enter") sendMessage();
 });
 
+// 🔥 나가기 버튼
+document.getElementById("exitBtn").onclick = function(){
+
+users = users.filter(u => u !== currentUser);
+localStorage.setItem("roomUsers_"+currentRoom, JSON.stringify(users));
+
+// 방 비었으면 삭제
+if(users.length === 0){
+localStorage.removeItem("roomUsers_"+currentRoom);
+}
+
+location.href = "rooms.html";
+
+};
+
 // 실행
 renderUsers();
-renderMessages();
 
 </script>
 
