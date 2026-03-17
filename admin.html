@@ -2,63 +2,33 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>관리자 페이지</title>
+<title>관리자</title>
 
 <style>
-#adminBtn{
-  position:fixed; bottom:10px; left:10px; background:#222; color:white;
-  width:40px; height:40px; display:flex; align-items:center; justify-content:center;
-  cursor:pointer; border-radius:8px;
-}
-
-.adminBox{
-  display:none; position:fixed; bottom:60px; left:10px;
-  background:white; border:1px solid #ccc; padding:15px; width:320px;
-  box-shadow:0 0 10px rgba(0,0,0,0.2); max-height:80%; overflow:auto;
-}
-
-.adminBox input{ width:100%; padding:6px; margin-bottom:8px; }
-.adminBox button{ margin:3px; padding:5px; cursor:pointer; }
-h3{ margin-top:15px; }
+#adminBtn{position:fixed;bottom:10px;left:10px;background:#222;color:#fff;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;}
+.adminBox{display:none;position:fixed;bottom:60px;left:10px;background:#fff;border:1px solid #ccc;padding:15px;width:320px;max-height:80%;overflow:auto;}
 </style>
 </head>
 
 <body>
 
-<!-- ⚙ 버튼 -->
 <div id="adminBtn">⚙</div>
 
-<!-- 로그인 -->
 <div id="adminLogin" class="adminBox">
-  <h3>관리자 로그인</h3>
-  <input type="password" id="adminPass" placeholder="비밀번호">
-  <button onclick="login()">접속</button>
+<input type="password" id="adminPass">
+<button onclick="login()">접속</button>
 </div>
 
-<!-- 관리자 패널 -->
 <div id="adminPanel" class="adminBox">
 
-<h2>관리자 패널</h2>
-
-<!-- 유저 -->
-<h3>👤 유저 관리</h3>
+<h3>👤 유저</h3>
 <ul id="userList"></ul>
 
-<!-- 방 -->
-<h3>🏠 방 관리</h3>
+<h3>🏠 방</h3>
 <ul id="roomList"></ul>
 
-<!-- 신고 -->
-<h3>🚨 신고 처리센터</h3>
-<ul id="reportList"></ul>
-
-<!-- 문의 -->
-<h3>📩 문의</h3>
-<ul id="inquiryList"></ul>
-
-<!-- 공지 -->
 <h3>📢 공지</h3>
-<input id="noticeInput" placeholder="공지 입력">
+<input id="noticeInput">
 <button onclick="addNotice()">등록</button>
 <ul id="noticeList"></ul>
 
@@ -66,232 +36,151 @@ h3{ margin-top:15px; }
 
 </div>
 
-<script>
+<script type="module">
 
-const ADMIN_PASSWORD = "beepadmin";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import {
+getFirestore,
+collection,
+onSnapshot,
+deleteDoc,
+doc,
+addDoc
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-// 🔥 초기 데이터
-if(!localStorage.getItem("users")) localStorage.setItem("users","[]");
-if(!localStorage.getItem("rooms")) localStorage.setItem("rooms","[]");
-if(!localStorage.getItem("reports")) localStorage.setItem("reports","[]");
-if(!localStorage.getItem("bannedUsers")) localStorage.setItem("bannedUsers","[]");
-if(!localStorage.getItem("inquiries")) localStorage.setItem("inquiries","[]");
-if(!localStorage.getItem("notices")) localStorage.setItem("notices","[]");
+const firebaseConfig = {
+apiKey: "AIzaSyBAplZ2_XOS18w2zGvkzpvWIIAv2LJAM3A",
+authDomain: "chat-site-86ccf.firebaseapp.com",
+projectId: "chat-site-86ccf"
+};
 
-// 버튼
-document.getElementById("adminBtn").onclick = ()=>{
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const ADMIN_PASSWORD="beepadmin";
+
+document.getElementById("adminBtn").onclick=()=>{
 document.getElementById("adminLogin").style.display="block";
 };
 
-// 로그인
-function login(){
-let pass = document.getElementById("adminPass").value;
-
-if(pass === ADMIN_PASSWORD){
+window.login=function(){
+if(document.getElementById("adminPass").value===ADMIN_PASSWORD){
 document.getElementById("adminLogin").style.display="none";
 document.getElementById("adminPanel").style.display="block";
 load();
-}else{
-alert("비밀번호 틀림");
-}
-}
+}else alert("비번 틀림");
+};
 
-// 닫기
-function closePanel(){
+window.closePanel=()=>{
 document.getElementById("adminPanel").style.display="none";
-}
+};
 
-// 🔥 데이터 로드
+// =====================
+// 🔥 데이터
+// =====================
 function load(){
 
-let users = JSON.parse(localStorage.getItem("users"));
-let rooms = JSON.parse(localStorage.getItem("rooms"));
-let reports = JSON.parse(localStorage.getItem("reports"));
-let inquiries = JSON.parse(localStorage.getItem("inquiries"));
-let notices = JSON.parse(localStorage.getItem("notices"));
+// 유저
+onSnapshot(collection(db,"users"), snap=>{
+let list=document.getElementById("userList");
+list.innerHTML="";
 
-let userList = document.getElementById("userList");
-let roomList = document.getElementById("roomList");
-let reportList = document.getElementById("reportList");
-let inquiryList = document.getElementById("inquiryList");
-let noticeList = document.getElementById("noticeList");
+snap.forEach(d=>{
+let u=d.data();
 
-userList.innerHTML="";
-roomList.innerHTML="";
-reportList.innerHTML="";
-inquiryList.innerHTML="";
-noticeList.innerHTML="";
+let li=document.createElement("li");
+li.textContent=u.nickname;
 
-// =====================
-// 👤 유저 관리
-// =====================
-users.forEach((u,i)=>{
-let li = document.createElement("li");
+let del=document.createElement("button");
+del.textContent="삭제";
+del.onclick=()=>deleteUser(d.id);
 
-li.innerHTML = `
-${u.nickname} (${u.age}) ${u.gender || ""}
-`;
+let ban=document.createElement("button");
+ban.textContent="차단";
+ban.onclick=()=>banUser(u.nickname);
 
-let banBtn = document.createElement("button");
-banBtn.textContent="차단";
-banBtn.onclick=()=>banUser(u.nickname);
+let kick=document.createElement("button");
+kick.textContent="강퇴";
+kick.onclick=()=>kickUser(u.nickname);
 
-let delBtn = document.createElement("button");
-delBtn.textContent="삭제";
-delBtn.onclick=()=>deleteUser(i);
-
-li.appendChild(banBtn);
-li.appendChild(delBtn);
-
-userList.appendChild(li);
+li.append(del,ban,kick);
+list.appendChild(li);
+});
 });
 
-// =====================
-// 🏠 방 관리
-// =====================
-rooms.forEach((r,i)=>{
-let li = document.createElement("li");
+// 방
+onSnapshot(collection(db,"rooms"), snap=>{
+let list=document.getElementById("roomList");
+list.innerHTML="";
 
-li.innerHTML = `
-${r.title} (방장: ${r.owner || "없음"})
-`;
+snap.forEach(d=>{
+let r=d.data();
 
-let delBtn = document.createElement("button");
-delBtn.textContent="삭제";
-delBtn.onclick=()=>deleteRoom(i);
+let li=document.createElement("li");
+li.textContent=`${r.title} (${r.users})`;
 
-li.appendChild(delBtn);
+let del=document.createElement("button");
+del.textContent="삭제";
+del.onclick=()=>deleteRoom(d.id);
 
-roomList.appendChild(li);
+li.appendChild(del);
+list.appendChild(li);
 });
-
-// =====================
-// 🚨 신고
-// =====================
-reports.forEach((r,i)=>{
-let li = document.createElement("li");
-
-li.innerHTML = `
-대상: ${r.target}<br>
-이유: ${r.reason}<br>
-신고자: ${r.reporter}
-`;
-
-let warnBtn = document.createElement("button");
-warnBtn.textContent="경고";
-warnBtn.onclick=()=>warnUser(r.target);
-
-let banBtn = document.createElement("button");
-banBtn.textContent="차단";
-banBtn.onclick=()=>banUser(r.target);
-
-let delBtn = document.createElement("button");
-delBtn.textContent="삭제";
-delBtn.onclick=()=>deleteReport(i);
-
-li.appendChild(warnBtn);
-li.appendChild(banBtn);
-li.appendChild(delBtn);
-
-reportList.appendChild(li);
 });
-
-// =====================
-// 📩 문의
-// =====================
-inquiries.forEach((q,i)=>{
-let li = document.createElement("li");
-
-li.innerHTML = `
-${q.user}: ${q.text}
-`;
-
-let doneBtn = document.createElement("button");
-doneBtn.textContent="해결";
-doneBtn.onclick=()=>deleteInquiry(i);
-
-li.appendChild(doneBtn);
-
-inquiryList.appendChild(li);
-});
-
-// =====================
-// 📢 공지
-// =====================
-notices.forEach(n=>{
-let li = document.createElement("li");
-li.textContent = n;
-noticeList.appendChild(li);
-});
-
-}
-
-// =====================
-// 🔥 기능들
-// =====================
-
-// 유저 차단
-function banUser(name){
-let banned = JSON.parse(localStorage.getItem("bannedUsers"));
-if(!banned.includes(name)){
-banned.push(name);
-localStorage.setItem("bannedUsers", JSON.stringify(banned));
-alert(name+" 차단됨");
-}
-}
-
-// 유저 삭제
-function deleteUser(i){
-let users = JSON.parse(localStorage.getItem("users"));
-users.splice(i,1);
-localStorage.setItem("users", JSON.stringify(users));
-load();
-}
-
-// 방 삭제
-function deleteRoom(i){
-let rooms = JSON.parse(localStorage.getItem("rooms"));
-rooms.splice(i,1);
-localStorage.setItem("rooms", JSON.stringify(rooms));
-load();
-}
-
-// 신고 삭제
-function deleteReport(i){
-let reports = JSON.parse(localStorage.getItem("reports"));
-reports.splice(i,1);
-localStorage.setItem("reports", JSON.stringify(reports));
-load();
-}
-
-// 문의 삭제
-function deleteInquiry(i){
-let inquiries = JSON.parse(localStorage.getItem("inquiries"));
-inquiries.splice(i,1);
-localStorage.setItem("inquiries", JSON.stringify(inquiries));
-load();
-}
-
-// 경고
-function warnUser(name){
-alert(name+"에게 경고 전송");
-}
 
 // 공지
-function addNotice(){
-let input = document.getElementById("noticeInput");
-let notices = JSON.parse(localStorage.getItem("notices"));
+onSnapshot(collection(db,"notices"), snap=>{
+let list=document.getElementById("noticeList");
+list.innerHTML="";
 
-if(input.value.trim() === "") return;
+snap.forEach(d=>{
+let li=document.createElement("li");
+li.textContent=d.data().text;
+list.appendChild(li);
+});
+});
 
-notices.push(input.value);
-localStorage.setItem("notices", JSON.stringify(notices));
-
-input.value="";
-load();
 }
 
-</script>
+// =====================
+// 🔥 기능
+// =====================
+async function deleteUser(id){
+await deleteDoc(doc(db,"users",id));
+}
 
+async function deleteRoom(id){
+await deleteDoc(doc(db,"rooms",id));
+}
+
+async function banUser(name){
+await addDoc(collection(db,"bannedUsers"),{
+name:name,
+time:Date.now()
+});
+alert("차단됨");
+}
+
+async function kickUser(name){
+await addDoc(collection(db,"kicks"),{
+target:name,
+time:Date.now()
+});
+alert("강퇴됨");
+}
+
+window.addNotice=async function(){
+let input=document.getElementById("noticeInput");
+if(!input.value.trim()) return;
+
+await addDoc(collection(db,"notices"),{
+text:input.value,
+time:Date.now()
+});
+
+input.value="";
+};
+
+</script>
 </body>
 </html>
