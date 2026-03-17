@@ -16,13 +16,11 @@ body{margin:0; display:flex; font-family:sans-serif;}
 </head>
 <body>
 
-<!-- 유저 목록 -->
 <div id="users">
 <h3>접속자</h3>
 <ul id="userList"></ul>
 </div>
 
-<!-- 채팅 -->
 <div id="chat">
 <div id="messages"></div>
 
@@ -33,86 +31,86 @@ body{margin:0; display:flex; font-family:sans-serif;}
 </div>
 
 <script>
+
 const currentUser = localStorage.getItem("currentUser");
 const currentRoom = localStorage.getItem("currentRoom");
 
 if(!currentUser || !currentRoom){
-  alert("잘못된 접근");
-  location.href = "index.html";
+alert("잘못된 접근");
+location.href = "rooms.html";
 }
 
-// 데이터 불러오기
 let rooms = JSON.parse(localStorage.getItem("rooms")) || [];
 let messages = JSON.parse(localStorage.getItem("messages_"+currentRoom)) || [];
 let users = JSON.parse(localStorage.getItem("roomUsers_"+currentRoom)) || [];
 
-// 방 찾기
 const room = rooms.find(r => r.title === currentRoom);
 
 // 유저 추가
 if(!users.includes(currentUser)){
-  users.push(currentUser);
-  localStorage.setItem("roomUsers_"+currentRoom, JSON.stringify(users));
+users.push(currentUser);
+localStorage.setItem("roomUsers_"+currentRoom, JSON.stringify(users));
 }
 
-// 유저 목록 표시
+// 유저 목록
 function renderUsers(){
-  const list = document.getElementById("userList");
-  list.innerHTML = "";
+const list = document.getElementById("userList");
+list.innerHTML = "";
 
-  users.forEach(u=>{
-    const li = document.createElement("li");
+users.forEach(u=>{
+const li = document.createElement("li");
 
-    if(room && room.owner === u){
-      li.innerHTML = `<span class="owner">👑 ${u}</span>`;
-    } else {
-      li.textContent = u;
-    }
-
-    list.appendChild(li);
-  });
+if(room && room.owner === u){
+li.innerHTML = `<span class="owner">👑 ${u}</span>`;
+} else {
+li.textContent = u;
 }
 
-// 메시지 표시
+list.appendChild(li);
+});
+}
+
+// 메시지
 function renderMessages(){
-  const box = document.getElementById("messages");
-  box.innerHTML = "";
+const box = document.getElementById("messages");
+box.innerHTML = "";
 
-  messages.forEach(m=>{
-    const div = document.createElement("div");
-    div.textContent = `${m.user}: ${m.text}`;
-    box.appendChild(div);
-  });
+messages.forEach(m=>{
+const div = document.createElement("div");
+div.textContent = `${m.user}: ${m.text}`;
+box.appendChild(div);
+});
 
-  box.scrollTop = box.scrollHeight;
+box.scrollTop = box.scrollHeight;
 }
 
-// 메시지 전송
+// 전송
 function sendMessage(){
-  const input = document.getElementById("msgInput");
-  const text = input.value.trim();
-  if(!text) return;
+const input = document.getElementById("msgInput");
+const text = input.value.trim();
+if(!text) return;
 
-  messages.push({
-    user: currentUser,
-    text: text
-  });
+messages.push({
+user: currentUser,
+text: text
+});
 
-  localStorage.setItem("messages_"+currentRoom, JSON.stringify(messages));
+localStorage.setItem("messages_"+currentRoom, JSON.stringify(messages));
 
-  input.value = "";
-  renderMessages();
+input.value = "";
+renderMessages();
 }
 
 // 이벤트
 document.getElementById("sendBtn").addEventListener("click", sendMessage);
 document.getElementById("msgInput").addEventListener("keypress", e=>{
-  if(e.key === "Enter") sendMessage();
+if(e.key === "Enter") sendMessage();
 });
 
-// 처음 실행
+// 실행
 renderUsers();
 renderMessages();
+
 </script>
 
 </body>
