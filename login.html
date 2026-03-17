@@ -14,54 +14,44 @@
 
 <button onclick="login()">로그인</button>
 
-<p><a href="signup.html">회원가입</a></p>
-
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>로그인</title>
-</head>
-
-<body>
-
-<h2>로그인</h2>
-
-<input id="nickname" placeholder="별명"><br><br>
-<input id="pw" type="password" placeholder="비밀번호"><br><br>
-
-<button onclick="login()">로그인</button>
-
-<p><a href="signup.html">회원가입</a></p>
-
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBAplZ2_XOS18w2zGvkzpvWIIAv2LJAM3A",
   authDomain: "chat-site-86ccf.firebaseapp.com",
   projectId: "chat-site-86ccf",
-  storageBucket: "chat-site-86ccf.firebasestorage.app",
-  messagingSenderId: "397090849150",
-  appId: "1:397090849150:web:d7c6a265ad0af933c9332f"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-
-window.login = function(){
+window.login = async function(){
 
 let nickname = document.getElementById("nickname").value;
 let pw = document.getElementById("pw").value;
 
-alert
+const q = query(collection(db,"users"),
+where("nickname","==",nickname),
+where("pw","==",pw));
+
+const snapshot = await getDocs(q);
+
+if(snapshot.empty){
+alert("정보 틀림");
+return;
+}
+
+localStorage.setItem("loginUser",nickname);
+
+alert("로그인 성공");
+location.href="chat.html";
+
+}
 
 </script>
 
-</body>
-</html>
 </body>
 </html>
