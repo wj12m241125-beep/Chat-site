@@ -23,29 +23,37 @@ body{font-family:Arial; background:#f2f2f2; margin:0; padding:20px;}
 </div>
 
 <div id="categories">
-<button class="cat active" onclick="setCategory('전체')">전체</button>
-<button class="cat" onclick="setCategory('10대')">10대</button>
-<button class="cat" onclick="setCategory('20대')">20대</button>
-<button class="cat" onclick="setCategory('30대')">30대</button>
-<button class="cat" onclick="setCategory('40대')">40대</button>
-<button class="cat" onclick="setCategory('50대')">50대</button>
+<button class="cat active" onclick="setCategory('전체', event)">전체</button>
+<button class="cat" onclick="setCategory('10대', event)">10대</button>
+<button class="cat" onclick="setCategory('20대', event)">20대</button>
+<button class="cat" onclick="setCategory('30대', event)">30대</button>
+<button class="cat" onclick="setCategory('40대', event)">40대</button>
+<button class="cat" onclick="setCategory('50대', event)">50대</button>
 </div>
 
 <div id="rooms"></div>
 
-<script>
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBAplZ2_XOS18w2zGvkzpvWIIAv2LJAM3A",
+  authDomain: "chat-site-86ccf.firebaseapp.com",
+  projectId: "chat-site-86ccf",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 🔥 현재 유저
+let nickname = localStorage.getItem("loginUser");
+let age = localStorage.getItem("age");
 
 let currentCategory="전체"
 
-let nickname = localStorage.getItem("nickname")
-let age = localStorage.getItem("age")
-
-let rooms = JSON.parse(localStorage.getItem("rooms") || "[]")
-
-function save(){
-localStorage.setItem("rooms", JSON.stringify(rooms))
-}
-
+// 나이 카테고리
 function getAgeCategory(){
 if(!age) return "기타"
 let n = parseInt(age)
@@ -56,18 +64,34 @@ if(n<50) return "40대"
 return "50대"
 }
 
-function setCategory(c){
+// 카테고리 선택
+window.setCategory = function(c,e){
 currentCategory=c
 document.querySelectorAll(".cat").forEach(b=>b.classList.remove("active"))
-event.target.classList.add("active")
-render()
+e.target.classList.add("active")
+renderRooms(lastSnapshot)
 }
 
-function render(){
+// 🔥 실시간 방 목록
+let lastSnapshot = [];
+
+const q = query(collection(db,"rooms"));
+
+onSnapshot(q,(snapshot)=>{
+lastSnapshot = snapshot.docs.map(doc=>({
+id:doc.id,
+...doc.data()
+}));
+renderRooms(lastSnapshot);
+});
+
+// 렌더
+function renderRooms(rooms){
+
 let box=document.getElementById("rooms")
 box.innerHTML=""
 
-rooms.forEach((r,i)=>{
+rooms.forEach(r=>{
 
 if(currentCategory!=="전체" && r.category!==currentCategory) return
 
@@ -75,34 +99,38 @@ let div=document.createElement("div")
 div.className="room"
 
 div.innerHTML=
-"<b>"+r.title+"</b><br>"+
-r.users+" / "+r.max+" 명<br>"+
-"방장 : "+r.owner+" ("+r.age+")"
+`<b>${r.title}</b><br>
+${r.users || 0} / ${r.max} 명<br>
+방장 : ${r.owner}`
 
-div.onclick=function(){
+// 입장
+div.onclick=async function(){
 
-if(r.users>=r.max){
+if((r.users||0) >= r.max){
 alert("방이 가득 찼습니다")
 return
 }
 
-// 🔥 핵심 추가
 localStorage.setItem("currentUser", nickname)
 localStorage.setItem("currentRoom", r.title)
 
-rooms[i].users++
-save()
+// 🔥 인원 증가
+await addDoc(collection(db,"roomUsers_"+r.title),{
+user:nickname,
+time:Date.now()
+});
 
 location.href="chat.html"
 }
 
 box.appendChild(div)
+
 })
 
-save()
 }
 
-function createRoom(){
+// 방 생성
+window.createRoom = async function(){
 
 if(!nickname){
 alert("로그인 후 이용해주세요")
@@ -113,44 +141,29 @@ return
 let title=prompt("방 제목")
 if(!title) return
 
-if(rooms.some(r=>r.title===title)){
-alert("이미 존재하는 방 제목입니다")
-return
-}
-
 let max=prompt("최대 인원")
 if(!max || isNaN(max)){
-alert("숫자를 입력해주세요")
-return
-}
-
-max=parseInt(max)
-if(max<2){
-alert("최소 2명 이상")
+alert("숫자 입력")
 return
 }
 
 let category=getAgeCategory()
 
-rooms.push({
+await addDoc(collection(db,"rooms"),{
 title:title,
 users:1,
-max:max,
+max:parseInt(max),
 owner:nickname,
-age:age,
-category:category
+category:category,
+createdAt:Date.now()
 })
 
-// 🔥 핵심 추가
 localStorage.setItem("currentUser", nickname)
 localStorage.setItem("currentRoom", title)
 
-save()
-
 location.href="chat.html"
-}
 
-render()
+}
 
 </script>
 </body>
