@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>채팅방</title>
+
 <style>
 body{margin:0; display:flex; font-family:sans-serif;}
 #users{width:200px; background:#f4f4f4; padding:10px;}
@@ -13,6 +14,7 @@ body{margin:0; display:flex; font-family:sans-serif;}
 #inputBox button{padding:10px;}
 .system{color:orange;}
 #exitBtn{position:absolute; top:10px; right:10px;}
+#noticeBox{background:#ffeaa7; padding:5px;}
 </style>
 </head>
 
@@ -26,12 +28,16 @@ body{margin:0; display:flex; font-family:sans-serif;}
 </div>
 
 <div id="chat">
+
+<div id="noticeBox"></div>
+
 <div id="messages"></div>
 
 <div id="inputBox">
 <input type="text" id="msgInput">
 <button id="sendBtn">전송</button>
 </div>
+
 </div>
 
 <script type="module">
@@ -66,156 +72,167 @@ alert("잘못된 접근");
 location.href="rooms.html";
 }
 
-// 🔥 내 유저 문서 id 저장용
 let myDocId = null;
 
-// =======================
-// 👥 접속자 추가
-// =======================
+// =====================
+// 👥 입장
+// =====================
 async function joinRoom(){
-const docRef = await addDoc(collection(db,"roomUsers_"+currentRoom),{
+const ref = await addDoc(collection(db,"roomUsers_"+currentRoom),{
 user: currentUser,
 time: Date.now()
 });
-myDocId = docRef.id;
+myDocId = ref.id;
 }
 await joinRoom();
 
-// =======================
-// 👥 접속자 실시간 표시
-// =======================
-const userQuery = query(collection(db,"roomUsers_"+currentRoom));
-
-onSnapshot(userQuery,(snapshot)=>{
+// =====================
+// 👥 접속자 표시
+// =====================
+onSnapshot(collection(db,"roomUsers_"+currentRoom), snapshot=>{
 
 const list = document.getElementById("userList");
 list.innerHTML="";
 
 let count = 0;
 
-snapshot.forEach(doc=>{
-const data = doc.data();
+snapshot.forEach(d=>{
 count++;
-
-const li = document.createElement("li");
-li.textContent = data.user;
+let li=document.createElement("li");
+li.textContent=d.data().user;
 list.appendChild(li);
 });
 
-// 🔥 방 인원 업데이트
 updateRoomCount(count);
 
-// 🔥 인원 0명 → 방 삭제
-if(count === 0){
-deleteRoom();
-}
+if(count===0) deleteRoom();
 
 });
 
-// =======================
+// =====================
 // 🔥 방 인원 업데이트
-// =======================
+// =====================
 async function updateRoomCount(count){
 const rooms = await getDocs(collection(db,"rooms"));
 
 rooms.forEach(async r=>{
-if(r.data().title === currentRoom){
+if(r.data().title===currentRoom){
 await deleteDoc(doc(db,"rooms",r.id));
 await addDoc(collection(db,"rooms"),{
 ...r.data(),
-users: count
+users:count
 });
 }
 });
 }
 
-// =======================
-// 🔥 방 삭제
-// =======================
+// =====================
+// 🧹 방 삭제
+// =====================
 async function deleteRoom(){
 const rooms = await getDocs(collection(db,"rooms"));
 
 rooms.forEach(async r=>{
-if(r.data().title === currentRoom){
+if(r.data().title===currentRoom){
 await deleteDoc(doc(db,"rooms",r.id));
 }
 });
 }
 
-// =======================
-// 💬 실시간 채팅
-// =======================
-const msgQuery = query(
+// =====================
+// 💬 채팅
+// =====================
+onSnapshot(query(
 collection(db,"messages_"+currentRoom),
 orderBy("time")
-);
+), snapshot=>{
 
-onSnapshot(msgQuery,(snapshot)=>{
-
-const box = document.getElementById("messages");
+const box=document.getElementById("messages");
 box.innerHTML="";
 
 snapshot.forEach(doc=>{
-const m = doc.data();
-const div = document.createElement("div");
+let m=doc.data();
+let div=document.createElement("div");
 
 if(m.system){
-div.innerHTML = `<span class="system">${m.text}</span>`;
+div.innerHTML=`<span class="system">${m.text}</span>`;
 }else{
-div.textContent = `${m.user}: ${m.text}`;
+div.textContent=`${m.user}: ${m.text}`;
 }
 
 box.appendChild(div);
 });
 
-box.scrollTop = box.scrollHeight;
+box.scrollTop=box.scrollHeight;
 
 });
 
-// =======================
-// 💬 메시지 전송
-// =======================
+// 전송
 window.sendMessage = async function(){
-
-let input = document.getElementById("msgInput");
-let text = input.value.trim();
+let input=document.getElementById("msgInput");
+let text=input.value.trim();
 if(!text) return;
 
 await addDoc(collection(db,"messages_"+currentRoom),{
-user: currentUser,
-text: text,
-time: Date.now()
+user:currentUser,
+text:text,
+time:Date.now()
 });
 
 input.value="";
 };
 
-document.getElementById("sendBtn").onclick = sendMessage;
-document.getElementById("msgInput").addEventListener("keypress", e=>{
+document.getElementById("sendBtn").onclick=sendMessage;
+document.getElementById("msgInput").addEventListener("keypress",e=>{
 if(e.key==="Enter") sendMessage();
 });
 
-// =======================
+// =====================
 // 🚪 나가기
-// =======================
-document.getElementById("exitBtn").onclick = async function(){
-
-// 🔥 내 유저 삭제
+// =====================
+async function leave(){
 if(myDocId){
-await deleteDoc(doc(db,"roomUsers_"+currentRoom, myDocId));
+await deleteDoc(doc(db,"roomUsers_"+currentRoom,myDocId));
+}
+location.href="rooms.html";
 }
 
-location.href="rooms.html";
-};
+document.getElementById("exitBtn").onclick=leave;
 
-// 🔥 창 닫아도 자동 나가기
-window.addEventListener("beforeunload", async ()=>{
+window.addEventListener("beforeunload",()=>{
 if(myDocId){
-await deleteDoc(doc(db,"roomUsers_"+currentRoom, myDocId));
+deleteDoc(doc(db,"roomUsers_"+currentRoom,myDocId));
 }
 });
 
-</script>
+// =====================
+// 🚫 강퇴 감지
+// =====================
+onSnapshot(collection(db,"kicks"), snapshot=>{
+snapshot.forEach(d=>{
+let data=d.data();
 
+if(data.target===currentUser){
+alert("강퇴됨");
+leave();
+}
+});
+});
+
+// =====================
+// 📢 공지
+// =====================
+onSnapshot(collection(db,"notices"), snapshot=>{
+let box=document.getElementById("noticeBox");
+box.innerHTML="";
+
+snapshot.forEach(d=>{
+let div=document.createElement("div");
+div.textContent="📢 "+d.data().text;
+box.appendChild(div);
+});
+});
+
+</script>
 </body>
 </html>
