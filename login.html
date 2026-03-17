@@ -20,34 +20,52 @@
 
 function login(){
 
-var nickname=document.getElementById("nickname").value;
-var pw=document.getElementById("pw").value;
+var nickname = document.getElementById("nickname").value;
+var pw = document.getElementById("pw").value;
 
-var users=JSON.parse(localStorage.getItem("users"))||[];
+var users = JSON.parse(localStorage.getItem("users")) || [];
+var banned = JSON.parse(localStorage.getItem("bannedUsers") || "[]");
 
-var ok=false;
+var foundUser = null;
 
+// 🔍 유저 찾기
 users.forEach(function(user){
-
-if(user.nickname===nickname && user.pw===pw){
-ok=true;
+if(user.nickname === nickname && user.pw === pw){
+foundUser = user;
 }
-
 });
 
-if(ok){
+// ❌ 로그인 실패
+if(!foundUser){
+alert("정보가 틀렸습니다");
+return;
+}
 
-localStorage.setItem("loginUser",nickname);
+// 🚫 차단 체크 (🔥 핵심 추가)
+if(banned.includes(nickname)){
+alert("차단된 사용자입니다");
+return;
+}
+
+// ✅ 로그인 성공
+localStorage.setItem("loginUser", nickname);
+localStorage.setItem("currentUser", nickname);
+
+// 👉 관리자에서 쓸 정보 저장 (나이/성별)
+localStorage.setItem("age", foundUser.age || "");
+localStorage.setItem("gender", foundUser.gender || "");
+
+// 👉 접속 유저 목록 기록 (관리자용)
+var onlineUsers = JSON.parse(localStorage.getItem("onlineUsers") || "[]");
+
+if(!onlineUsers.includes(nickname)){
+onlineUsers.push(nickname);
+localStorage.setItem("onlineUsers", JSON.stringify(onlineUsers));
+}
 
 alert("로그인 성공");
 
-window.location.href="index.html";
-
-}else{
-
-alert("정보가 틀렸습니다");
-
-}
+window.location.href = "index.html";
 
 }
 
